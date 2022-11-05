@@ -1,0 +1,8 @@
+{
+  "label": "Setup",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "How to setup the project to get started."
+  }
+}
