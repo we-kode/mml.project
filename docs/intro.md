@@ -5,7 +5,11 @@ sidebar_position: 1
 
 # Project description
 
-Let's discover **Docusaurus in less than 5 minutes**.
+:::info
+
+This documentation is in progress and will be available soon...
+
+:::
 
 ## Getting Started
 
