@@ -16,7 +16,7 @@ In the .env ifle defaults are define. Feel free to change the configuration on y
 We setzen vorraus, dass you wissen wie man linux und docker.compose bedient. Wenn nicht gucke erst auf official docu of dockerc-compose
 :::
 
-### Create folder (optional)
+## Create folder (optional)
 
 ```
 mkdir ~/medialib
@@ -27,13 +27,13 @@ scp docker-compose.yml .env ~/medialib
 
 configure folder rights as you like
 
-### Create mml user
+## Create mml user
 
 ```
 sudo groupadd -r -g 1001 mml && sudo useradd -r -d /nonexistent -s /bin/false -u 1001 -g 1001 mml
 ```
 
-### Install docker
+## Install docker
 
 ```
 sudo apt-get remove docker docker-engine docker.io containerd runc
@@ -53,17 +53,17 @@ sudo usermod -a -G mml media
 sudo docker network create wekode.mml
 ```
 
-### Configure firewall (optional)
+## Configure firewall (optional)
 
 Its your problem
 
-### Domain and SSL/TLS certificates
+## Domain and SSL/TLS certificates
 
 We need domain and certs in .pfx, key, crt files it`s your problem
 
 copy them e.g to ~/medialib/certs
 
-### Configure database service
+## Configure database service
 
 ```
 cd ~/medialib
@@ -90,7 +90,7 @@ sudo chmod -R 0550 db/
 sudo docker compose up wekode.mml.db -d
 ```
 
-### Configure cache service
+## Configure cache service
 
 ```
 mkdir cache
@@ -102,7 +102,7 @@ sudo chmod -R 0550 cache/
 sudo docker compose up wekode.mml.cache -d
 ```
 
-### Configure message bus
+## Configure message bus
 
 ```
 mkdir mbus
@@ -115,7 +115,7 @@ sudo chmod -R 0550 mbus/
 sudo docker compose up wekode.mml.mbus -d
 ```
 
-### Configure reverse proxy
+## Configure reverse proxy
 
 ```
 mkdir proxy
@@ -128,7 +128,7 @@ sudo chmod -R 0550 proxy/
 sudo docker compose up wekode.mml.reverseproxy -d
 ```
 
-### Configure identity service
+## Configure identity service
 
 docker-hub reference
 
@@ -143,7 +143,7 @@ sudo docker exec -it wekode.mml.identity /bin/bash
 create
 ```
 
-### Configure media service
+## Configure media service
 
 docker-hub reference
 
@@ -160,14 +160,14 @@ sudo chmod -R 0750 /mnt/media/records
 sudo docker compose up wekode.mml.media -d
 ```
 
-### Start backend
+## Start backend
 
 ```
 cd ~/medialib
 docker compose up -d 
 ```
 
-### Create first admin client and user
+## Create first admin client and user
 
 ```
 sudo docker exec -it wekode.mml.identity /bin/bash
@@ -176,7 +176,7 @@ create
 
 You will be ask for a username and a password. The password must be at least 12 characters long. If no admin app exists already, a new one will be created and the clientId will be printed on the console.
 
-#### Manage admin clients
+### Manage admin clients
 
 You can install the admin app on several computers for example if you have multiple admins. The admin users can be managed in your admin app.
 If you want to give them a different client id you can generate a new one by using the cli inside the mml.identity project.

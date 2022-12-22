@@ -6,7 +6,7 @@ sidebar_position: 3
 
 You can customize your app by color title icon. You can do it manually, please refer to the offical docu. The guide will show an automated process with github actions. 
 
-### Customize
+## Customize
 
 download or fork
 copy the _content folder to config annd
@@ -19,7 +19,7 @@ run ./customize script (only on ubuntu)
 
 copy the ./mml.administration-app fodler to the os you will build the app for and build it from source.
 
-### Github Action Workflow
+## Github Action Workflow
 
 All the steps above can be done with github actions
 
@@ -27,7 +27,7 @@ cretae a fork of the mml.app repo
 customize
 create workflows for lsiten on new releases.
 
-#### Listen to release tags
+### Listen to release tags
 
 ```
 name: Sync fork with upstream
@@ -72,7 +72,7 @@ jobs:
         tag: ${{ steps.latest-tag.outputs.tag }}-mml
         token: ${{ secrets.SYNC_PAT }}
 ```
-#### Build the app and release it.
+### Build the app and release it.
 
 This workflow will cerate a aab release. If you want to create an apk please refere to the officialy docu.
 
@@ -271,6 +271,6 @@ jobs:
           files: ecgm-${{ github.ref_name }}.ipa
 ```
 
-#### Run build
+### Run build
 
 snyc fork will in this example sync every week for a new reelase. You can start build manually by runnging the sync_frok action manually.

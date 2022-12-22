@@ -6,7 +6,7 @@ sidebar_position: 2
 
 You can customize your admin app by color title icon. You can do it manually, please refer to the offical docu. The guide will show an automated process with github actions. 
 
-### Customize
+## Customize
 
 Chnage the content in the config folder
 icons
@@ -17,13 +17,13 @@ run ./customize script (only on ubuntu)
 
 copy the ./mml.administration-app fodler to the os you will build the app for and build it from source.
 
-### Github Action Workflow
+## Github Action Workflow
 
 All the steps above can be done with github actions
 
 fork and customize then cretae workflows for github actions
 
-#### Listen to release tags
+### Listen to release tags
 
 ```
 name: Sync fork with upstream
@@ -70,7 +70,7 @@ jobs:
         token: ${{ secrets.SYNC_PAT }}
 ```
 
-#### Build the app and release it.
+### Build the app and release it.
 
 ```
 # based on https://angeloavv.medium.com/how-to-distribute-flutter-desktop-app-binaries-using-github-actions-f8d0f9be4d6b
@@ -250,6 +250,6 @@ jobs:
           files: build/macos/Build/Products/Release/ECG-Medialib-Admin-${{github.ref_name}}-macos.dmg
 ```
 
-#### Run build
+### Run build
 
 snyc fork will in this example sync every week for a new reelase. You can start build manually by runnging the sync_frok action manually.
