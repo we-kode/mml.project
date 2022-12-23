@@ -16,6 +16,10 @@ In the .env ifle defaults are define. Feel free to change the configuration on y
 We setzen vorraus, dass you wissen wie man linux und docker.compose bedient. Wenn nicht gucke erst auf official docu of dockerc-compose
 :::
 
+:::caution
+Securing and hareding of the server and folders is your problem.
+:::
+
 ## Create folder (optional)
 
 ```
@@ -86,7 +90,6 @@ touch db/config/identity.conf
 touch db/config/media.conf
 nano .env
 sudo chown -R 1001:1001 db/
-sudo chmod -R 0550 db/
 sudo docker compose up wekode.mml.db -d
 ```
 
@@ -98,7 +101,6 @@ scp default.redis.conf ~/medialib/cache/redis.conf
 # change password in redis.conf
 # enter values in .env in redis section
 sudo chown -R 999:999 cache/
-sudo chmod -R 0550 cache/
 sudo docker compose up wekode.mml.cache -d
 ```
 
@@ -111,7 +113,6 @@ scp default.rabbitmq.conf ~/medialib/mbus/rabbitmq.conf
 # change deafult user and password in rabitmq.conf
 # enter values in .env in mbus section
 sudo chown -R 1001:1001 mbus/
-sudo chmod -R 0550 mbus/
 sudo docker compose up wekode.mml.mbus -d
 ```
 
@@ -124,7 +125,6 @@ scp default.conf.temnplate ~/medialib/proxy
 # SSL_PORT to 18188
 # enter values in .env file
 sudo chown -R 1001:1001 proxy/
-sudo chmod -R 0550 proxy/
 sudo docker compose up wekode.mml.reverseproxy -d
 ```
 
@@ -137,7 +137,6 @@ scp Identity.API/default.appsettings.json ~/medialib/identity/appsettings.json
 # enter values in appsettings
 # enter values in .env
 sudo chown -R 1001:1001 identity/
-sudo chmod -R 0550 identity/
 sudo docker compose up wekode.mml.identity -d
 sudo docker exec -it wekode.mml.identity /bin/bash
 create
@@ -154,9 +153,7 @@ sudo mkdir /mnt/media/records
 # enter values in appsettings
 # enter values in .env
 sudo chown -R 1001:1001 media/
-sudo chmod -R 0550 media/
 sudo chown -R 1001:1001 /mnt/media/records
-sudo chmod -R 0750 /mnt/media/records
 sudo docker compose up wekode.mml.media -d
 ```
 

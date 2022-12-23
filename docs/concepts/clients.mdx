@@ -1,0 +1,27 @@
+---
+sidebar_position: 4
+---
+
+import ThemedImage from '@theme/ThemedImage';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+# Clients
+
+Clients are devices registered and authorized to listen to **your** [records](./records). One client can only listen to [records](./records) in the same [group](./groups) as the client belongs to.
+
+First of all one client needs to be regsitered by scanning the qr code in the admin app. The [admin](./admins) can assign [groups](./groups) to the client before saving.
+
+Information which are collected are the _first name, name and model of device_. Furthermore the admin see the _last activity timestamp_ of one client.
+
+Clients can be managed in the admin app by clicking on one of them. Multiple clients can be managed by long press on one of them.
+
+Clients can remove their registration at any time in the settings of the mobile app. On performing this action the client will be removed from server.
+
+<ThemedImage
+  alt="Clients"
+  className="center"
+  sources={{
+    light: useBaseUrl('/img/clients_light.png'),
+    dark: useBaseUrl('/img/clients.png'),
+  }}
+/>

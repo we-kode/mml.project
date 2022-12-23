@@ -1,0 +1,53 @@
+---
+sidebar_position: 3
+---
+
+import ThemedImage from '@theme/ThemedImage';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+# Records
+
+Records are audio files uploaded by one [admin](./admins) in the admin app. 
+
+:::info File format
+Only mp3 files supported yet.
+:::
+
+Records can only be played by registered [clients](./clients) which are in the the same [group](./groups). One record can be managed in the admin app by clicking on it or multiple rceords with a long press at one of them.
+
+<ThemedImage
+  alt="Records"
+  className="center"
+  sources={{
+    light: useBaseUrl('/img/records_light.png'),
+    dark: useBaseUrl('/img/records.png'),
+  }}
+/>
+
+## Indexing records
+
+Records will be indexed based on the [id3 tags](https://id3.org/) of the audio file. Some tags are required, other can be left empty. The indexed information can be changed at any time in the admin app when managing records. Following tags will be captured: 
+
+- **Required**:
+  - **title** or **filename** will be used as title if title tag is empty.
+  - **tracknumber**
+  - As date the creation date of the file will be used by default. If you want to set your own date add one prefix in form `yymmdd_` to the filename.
+- **Optional**:
+  - **artist**
+  - **album**
+  - **genre**
+
+The records will be displayed grouped by the date and tracknumber in a flat view or folder view. Records can be compressed when uploading. One [admin](./admins) can be manage the comression in the settings of admin app. If no value is entered no compression of the records will be performed.
+
+
+[Clients](./clients) can filter on indexed tags.
+
+<ThemedImage
+  alt="Record filters"
+  className="center"
+  width="500"
+  sources={{
+    light: useBaseUrl('/img/records_filters_light.png'),
+    dark: useBaseUrl('/img/records_filters.png'),
+  }}
+/>

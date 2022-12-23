@@ -1,0 +1,23 @@
+---
+sidebar_position: 2
+---
+
+import ThemedImage from '@theme/ThemedImage';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+# Admins
+
+Admin users are users which can access the admin app and uplaod and manage [records](./records), [clients](./clients), [groups](./groups) and other admins.
+
+:::caution At least one admin
+At startup no admin exists. You have to [create the first admin](../setup/backend#create-first-admin-client-and-user) with the cli of the identity service. At least one admin must exists to login with the admin app.
+:::
+
+<ThemedImage
+  alt="Admins"
+  className="center"
+  sources={{
+    light: useBaseUrl('/img/admins_light.png'),
+    dark: useBaseUrl('/img/admins.png'),
+  }}
+/>

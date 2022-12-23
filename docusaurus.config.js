@@ -7,6 +7,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'My Media Lib',
+  staticDirectories: ['static'],
   tagline: 'Self-Hosted, Private, Everywhere Available media library',
   url: 'https://we-kode.github.io',
   baseUrl: '/mml.project/',

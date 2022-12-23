@@ -1,0 +1,29 @@
+---
+sidebar_position: 1
+---
+
+import ThemedImage from '@theme/ThemedImage';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+# Groups
+
+A group is a summary of [records](./records) and [clients](./clients). [Records](./records) can be played only by [clients](./clients) which are in the same group. [Clients](./clients) and [records](./records) can be in multiple groups.
+
+:::tip
+Before registering clients and uploading records create at least one group. Otherwise the clients will not see any records before you add them into one group.
+:::
+
+Groups can be managed in the admin app. A group can be marked as _default_. Default groups will be added automatically when a [record](./records) is uploaded or a new [client](./clients) is registered. [Admins](./admins) can remove default groups before uploading [records](./records) or after adding [clients](./clients).
+
+:::caution Update time
+If an admin removes groups or assigns them to a client the change will take effect in abaout an hour.
+:::
+
+<ThemedImage
+  alt="Groups"
+  className="center"
+  sources={{
+    light: useBaseUrl('/img/groups_light.png'),
+    dark: useBaseUrl('/img/groups.png'),
+  }}
+/>
