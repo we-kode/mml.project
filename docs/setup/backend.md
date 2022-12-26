@@ -4,40 +4,41 @@ sidebar_position: 1
 
 # Backend
 
-You can install the backend on a server you like. Its your choice. You can use kubernetes, .net install or docker-compose as you like.
-In this documentation we will focus only on the setup of the backend with docker-compose on a ubuntu 22.05 LTS
-Here we will for you a step by setp guide you can use to setup manual the server
-Feel free to automate the process. However we do not provide a setup script.
+:::caution Security
+Securing and hardening of your server and infrastructure is up to you and will not be covered in this documentation.
+:::
 
-The backend consist of multple services which need to be setup seperate. We provide one mono docker-compose file and a default .env-configuration file
-In the .env ifle defaults are define. Feel free to change the configuration on your neeeds.
+You can install the backend on a server you like. Its your choice. You can use [kubernetes](https://kubernetes.io/), [.net](https://learn.microsoft.com/en-us/dotnet/framework/deployment/) or [docker compose](https://docs.docker.com/compose/) to deploy the backend services. In this documentation we will focus only on the setup of the backend with [docker compose](https://docs.docker.com/compose/) on a [ubuntu 22.05 LTS](https://releases.ubuntu.com/22.04/). Here we show you a step by setp guide you can use to setup the backend manually. Feel free to automate the process. However we do not provide a setup script.
+
+The backend consists of multple services which need to be setup seperate. We provide one [mono docker-compose file and a default .env-configuration](https://github.com/we-kode/mml.deployment) file.
+In the [.env](https://github.com/we-kode/mml.deployment/blob/develop/.env) file defaults are defined. Feel free to change the configuration on your neeeds.
 
 :::info
-We setzen vorraus, dass you wissen wie man linux und docker.compose bedient. Wenn nicht gucke erst auf official docu of dockerc-compose
+We assume that you know how to use linux and [docker compose](https://docs.docker.com/compose/). If not, first look at official docu of [docker compose](https://docs.docker.com/compose/).
 :::
 
-:::caution
-Securing and hareding of the server and folders is your problem.
-:::
+## Copy monodeploy files
 
-## Create folder (optional)
+In this documentation all files and folders will be placed in `~/medialib`. Create this folder first.
 
 ```
 mkdir ~/medialib
 cd ~/medialib
 ```
 
-scp docker-compose.yml .env ~/medialib
-
-configure folder rights as you like
+Copy [`docker-compose.yml`](https://github.com/we-kode/mml.deployment/blob/develop/docker-compose.yml) and the [`.env`](https://github.com/we-kode/mml.deployment/blob/develop/.env) from the repository to `~/medialib` on server.
 
 ## Create mml user
+
+All docker contaienrs will run for user id `1001` and group id `1001`. So cretae group and user first.
 
 ```
 sudo groupadd -r -g 1001 mml && sudo useradd -r -d /nonexistent -s /bin/false -u 1001 -g 1001 mml
 ```
 
 ## Install docker
+
+To install docker and create the docker network `wekode.mml` run following commands.
 
 ```
 sudo apt-get remove docker docker-engine docker.io containerd runc
@@ -59,15 +60,23 @@ sudo docker network create wekode.mml
 
 ## Configure firewall (optional)
 
-Its your problem
+Default the ssl port `443` will be used for extern communication. Create firewall rules based on you infrastructure and your needs. We do not provide any suggestions on this.
+You are responsible for the security of your infrastructure.
 
 ## Domain and SSL/TLS certificates
 
-We need domain and certs in .pfx, key, crt files it`s your problem
+All services are running using ssl/tls encryption. We need a fullchain cert with it's private key and a pfx cert file to run the service.
 
-copy them e.g to ~/medialib/certs
+Generate a ssl/tls certificate based on your needs for your custom domain and copy it to the certs folder.
+
+```
+touch ~/medialib/certs
+*.crt *.key *.pfx
+```
 
 ## Configure database service
+
+=>
 
 ```
 cd ~/medialib
@@ -156,43 +165,50 @@ sudo chown -R 1001:1001 media/
 sudo chown -R 1001:1001 /mnt/media/records
 sudo docker compose up wekode.mml.media -d
 ```
-
+=>
 ## Start backend
 
+You can now start all services.
+
 ```
-cd ~/medialib
 docker compose up -d 
 ```
 
 ## Create first admin client and user
 
+No default user exists at the beginning. First you have to create one. It can be done with the command line interface inside the [mml.identity](https://github.com/we-kode/mml.identity) project. When the service is running inside docker the call will be:
+
 ```
 sudo docker exec -it wekode.mml.identity /bin/bash
-create
+root@6712536aabd:/app# create
 ```
 
-You will be ask for a username and a password. The password must be at least 12 characters long. If no admin app exists already, a new one will be created and the clientId will be printed on the console.
+You will be ask for a username and a password. If no admin app client id exists already, a new one will be created and the client id will be printed on the console.
+
+:::info Password length
+The password of one admin user must be at least 12 characters long. Shorter passwords are not accepted.
+:::
 
 ### Manage admin clients
 
-You can install the admin app on several computers for example if you have multiple admins. The admin users can be managed in your admin app.
-If you want to give them a different client id you can generate a new one by using the cli inside the mml.identity project.
+You can install the admin app on several computers for example if you have multiple [admins](../concepts/admins). The [admin users](../concepts/admins) can be managed in your admin app.
+If you want to give them a different client id, you can generate a new one by using the command line interface inside the [mml.identity](https://github.com/we-kode/mml.identity) project.
 
-Admin clients can be created, listed and removed by the command line e.g in the container. To create one client call
+Admin clients can be created, listed and removed by the command line interface. To create one client hwne the service is running in docker call
 
 ```
 docker exec -it wekode.mml.identity /bin/bash
 root@6712536aabd:/app# admin-create
 ```
 
-To list all admin clients call:
+To list all admin client ids call:
 
 ```
 docker exec -it wekode.mml.identity /bin/bash
 root@6712536aabd:/app# admin-list
 ```
 
-And to remove one client call:
+And to remove one client call and replace `<client id>` with your client id you want to remove:
 
 ```
 docker exec -it wekode.mml.identity /bin/bash

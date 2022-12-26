@@ -1,0 +1,43 @@
+---
+sidebar_position: 2
+---
+
+import ThemedImage from '@theme/ThemedImage';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+
+# Administration App
+
+The administration app can be used on Windows, macOs or Linux. We do not provide binary releases. You have to build the app by your own.
+Before you build your admin app you can [customize ](../customize) it by adding custom icon, title or color scheme.
+We will create release tags when new features or improvemnets are available. So you can automate your build by listening on them.
+
+## Build from source
+
+Please check the official flutter homepage to learn on how to build the app for [windows](https://docs.flutter.dev/deployment/windows), [linux](https://docs.flutter.dev/deployment/linux) or [macOS](https://docs.flutter.dev/deployment/macos).
+
+## First start
+
+### Login
+
+On first start you have to login. To login you need to pass several informations once. In all further logins only username and password must be entered.
+One client id and admin user should be [created](../setup/backend#create-first-admin-client-and-user) before the initial admin can login.
+
+<ThemedImage
+  alt="Login"
+  className="center"
+  sources={{
+    light: useBaseUrl('/img/login_light.png'),
+    dark: useBaseUrl('/img/login.png'),
+  }}
+/>
+
+1. **Username**: Username of the admin.
+2. **Password**: Password of the admin user.
+   
+3. **Client-ID**: The id of the actual admin app [created by the cli](../setup/backend#create-first-admin-client-and-user) of the identiy service.
+4. **Servername**: The domain and port of your backend server e.g abc.de:5555. As protocol always https will be used.
+5. **App-Key**: [Key for all admin apps](../setup/backend#configure-identity-service) to authoorize against the backend.
+
+### Default group
+
+Create one default [group](../concepts/groups), so [clients](../concepts/clients) and [records](../concepts/records) can be streamed. If no group is available the [clients](../concepts/clients) will not see [records](../concepts/records).
