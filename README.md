@@ -1,3 +1,5 @@
+[![Deploy to GitHub Pages](https://github.com/we-kode/mml.project/actions/workflows/deploy.yml/badge.svg?branch=master)](https://github.com/we-kode/mml.project/actions/workflows/deploy.yml)
+
 # Website
 
 This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
