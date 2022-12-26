@@ -2,34 +2,42 @@
 sidebar_position: 3
 ---
 
-# Android App
-
-You can customize your app by color title icon. You can do it manually, please refer to the offical docu. The guide will show an automated process with github actions. 
+You can customize the title, the logo and colors of your app.
 
 ## Customize
 
-download or fork
-copy the _content folder to config annd
-Chnage the content in the config folder
-icons
-color schema
-titles and bundle id in the config file
+### Manually
+You can customize the app manually. Please check the offical documentation on how to do this for [iOS](https://docs.flutter.dev/deployment/ios). This guide will show an automated process with github actions. 
 
-run ./customize script (only on ubuntu)
+### Automated
 
-copy the ./mml.administration-app fodler to the os you will build the app for and build it from source.
+:::info 
+The automated customization script runs on linux systems only.
+:::
+
+The [mml.app](https://github.com/we-kode/mml.app) provides one `_config` folder, where all configurations for the customization are included. Copy the `_config` folder to `config` and replace the configs with your custom needs.
+
+:::caution Filenames
+Please do not change the filenames in the config folder. Just replace them by your own files with the same filename.
+:::
+
+Icons you can [generate](https://www.appicon.co/) and replace the icons in the `icons` folder. You can [generate your custom color scheme](https://m3.material.io/theme-builder#/custom) and replace the color values in `lib_color_schemes.g.dart`.
+The title in different languages and the app id you can update in the app.cfg file. Also you can add here the url for your privacy policy and an url for your legal informations or leave them blank, so no urls will be set.
+
+To update run the `./customize` script. This script will clone the [mml.app](https://github.com/we-kode/mml.app) and replace all items with the items in the configuration. Copy the `./mml.app` folder to the os you like and [build the app from source](../setup/app).
 
 ## Github Action Workflow
 
-All the steps above can be done with github actions
+All the steps above can be done with github actions. Fork the [mml.app](https://github.com/we-kode/mml.app) and [customize](#automated) the app on your needs. The github workflow consists two actions. Sync fork for listen to new releases and Flutter CI to build the app, when new release is available. You need some [github secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets). The `SYNC_PAT` is a Personal Access Token with the right to create releases.
+For more information check the [step by step guide](https://damienaicheh.github.io/flutter/github/actions/2021/04/29/build-sign-flutter-android-github-actions-en.html). 
 
-cretae a fork of the mml.app repo
-customize
-create workflows for lsiten on new releases.
+:::info 
+Replace all texts in <...Some text...> with your custom values. More comments are in code of actions.
+:::
 
 ### Listen to release tags
 
-```
+```yaml
 name: Sync fork with upstream
 
 on:
@@ -74,9 +82,9 @@ jobs:
 ```
 ### Build the app and release it.
 
-This workflow will cerate a aab release. If you want to create an apk please refere to the officialy docu.
+This workflow will create an aab release, which you can use to upload to the google play store.
 
-```
+```yaml
 name: Flutter CI
 
 # Controls when the workflow will run
@@ -105,7 +113,7 @@ jobs:
       - name: Artefact customized version
         uses: actions/upload-artifact@v3
         with:
-          name: ECG-Medialib-Custom
+          name: Medialib-Custom
           path: mml.app
         
   build-android:
@@ -115,7 +123,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
-          name: ECG-Medialib-Custom
+          name: Medialib-Custom
       - uses: actions/setup-java@v2
         with:
           distribution: 'zulu'
@@ -129,30 +137,32 @@ jobs:
         run: |
           flutter pub run build_runner build --delete-conflicting-outputs
           flutter gen-l10n
+      # Save the jks file for signing the android app as base64 string in secrets.
       - name: Write jks
         uses: timheuer/base64-to-file@v1.1
         with:
-          fileName: 'upload-ecgm.jks'
+          fileName: 'upload.jks'
           fileDir: './android/app/'
           encodedString: ${{ secrets.ANDROID_JKS }}
+      # ANDROID_JKS_PASS: Password of the jks file.
       - name: Write key.properties
         run: |
           echo "storePassword=${{ secrets.ANDROID_JKS_PASS }}" >> ./android/key.properties
           echo "keyPassword=${{ secrets.ANDROID_JKS_PASS }}" >> ./android/key.properties
-          echo "keyAlias=ecgm" >> ./android/key.properties
-          echo "storeFile=upload-ecgm.jks" >> ./android/key.properties
+          echo "keyAlias=mml" >> ./android/key.properties
+          echo "storeFile=upload.jks" >> ./android/key.properties
       - name: Build artifacts
         run: |
           flutter build appbundle --release
       - name: Cleanup
         run: |
-          rm ./android/app/upload-ecgm.jks
+          rm ./android/app/upload.jks
           rm ./android/key.properties
-          mv build/app/outputs/bundle/release/app-release.aab build/app/outputs/bundle/release/ecgm-${{ github.ref_name }}.aab
+          mv build/app/outputs/bundle/release/app-release.aab build/app/outputs/bundle/release/mml-${{ github.ref_name }}.aab
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ECG-Medialib-Android
+          name: Medialib-Android
           path: build/app/outputs/bundle/release
   
   release-android:
@@ -162,115 +172,17 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
-          name: ECG-Medialib-Android
+          name: Medialib-Android
       - name: Android Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: ecgm-${{ github.ref_name }}.aab
-
-  build-ios:
-    runs-on: macos-latest
-    needs: [prepare]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          name: ECG-Medialib-Custom
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-      - name: Install the Apple certificate and provisioning profile
-        env:
-          P12_BASE64: ${{ secrets.P12_BASE64 }}
-          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
-          PROVISION_PROFILE_BASE64: ${{ secrets.PROVISION_PROFILE_BASE64 }}
-          PROVISION_PROFILE_UID: ${{ secrets.PROVISION_PROFILE_UID }}
-          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          CODE_SIGN_IDENTITY: ${{ secrets.CODE_SIGN_IDENTITY }}
-        run: |
-          # create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-          # import certificate and provisioning profile from secrets
-          echo -n "$P12_BASE64" | base64 --decode --output $CERTIFICATE_PATH
-          echo -n "$PROVISION_PROFILE_BASE64" | base64 --decode --output $PP_PATH
-          # create temporary keychain
-          security create-keychain -p "$P12_PASSWORD" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "$P12_PASSWORD" $KEYCHAIN_PATH
-          # import certificate to keychain
-          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security list-keychain -d user -s $KEYCHAIN_PATH
-          # apply provisioning profile
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
-      - name: Install project dependencies
-        run: flutter pub get
-      - name: Generate intermediates
-        run: |
-          flutter pub run build_runner build --delete-conflicting-outputs
-          flutter gen-l10n
-      - name: Build Flutter
-        run: flutter build ios --release --no-codesign
-      - name: Build resolve Swift dependencies
-        run: xcodebuild -resolvePackageDependencies -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release
-      - name: Build xArchive
-        run: |
-          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release DEVELOPMENT_TEAM=$TEAM_ID -sdk 'iphoneos' -destination 'generic/platform=iOS' -archivePath build-output/ecgm-${{ github.ref_name }}.xcarchive PROVISIONING_PROFILE=$PROVISION_PROFILE_UID clean archive CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY"
-      - name: Export ipa
-        run: |
-          echo '<?xml version="1.0" encoding="UTF-8"?>' >> ios/ExportOptions.plist
-          echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> ios/ExportOptions.plist
-          echo '<plist version="1.0">' >> ios/ExportOptions.plist
-          echo '<dict>' >> ios/ExportOptions.plist
-          echo '<key>method</key>' >> ios/ExportOptions.plist
-          echo '<string>app-store</string>' >> ios/ExportOptions.plist
-          echo '<key>teamID</key>' >> ios/ExportOptions.plist
-          echo "<string>${{ secrets.APPLE_TEAM_ID }}</string>" >> ios/ExportOptions.plist
-          echo '<key>signingStyle</key>' >> ios/ExportOptions.plist
-          echo '<string>manual</string>' >> ios/ExportOptions.plist
-          echo '<key>provisioningProfiles</key>' >> ios/ExportOptions.plist
-          echo '<dict>' >> ios/ExportOptions.plist
-          echo "<key>de.ecg.medialib</key>" >> ios/ExportOptions.plist
-          echo "<string>${{ secrets.PROVISION_PROFILE_UID }}</string>" >> ios/ExportOptions.plist
-          echo '</dict>' >> ios/ExportOptions.plist
-          echo '</dict>' >> ios/ExportOptions.plist
-          echo '</plist>' >> ios/ExportOptions.plist
-          cat ios/ExportOptions.plist
-          xcodebuild -exportArchive -archivePath build-output/ecgm-${{ github.ref_name }}.xcarchive -exportPath build-output/ios -exportOptionsPlist ios/ExportOptions.plist
-          mv build-output/ios/mml_app.ipa build-output/ios/ecgm-${{ github.ref_name }}.ipa
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ECG-Medialib-iOS
-          path: build-output/ios
-      - name: Clean up
-        if: ${{ always() }}
-        run: |
-          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
-          rm ~/Library/MobileDevice/Provisioning\ Profiles/build_pp.mobileprovision
-          rm ios/ExportOptions.plist
-  release-ios:
-    runs-on: ubuntu-latest
-    needs: [build-ios]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          name: ECG-Medialib-iOS
-      - name: iOS Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: ecgm-${{ github.ref_name }}.ipa
+          files: mml-${{ github.ref_name }}.aab 
 ```
 
-### Run build
+### Run action release
 
-snyc fork will in this example sync every week for a new reelase. You can start build manually by runnging the sync_frok action manually.
+The sync fork action in this example will sync every week and check for a new relase. You can start the sync fork action manually. The main action will be automatically triggered if a new release exists.
+The result will be an aab file you can upload to the google play store.

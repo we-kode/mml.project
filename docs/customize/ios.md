@@ -2,34 +2,41 @@
 sidebar_position: 4
 ---
 
-# iOS App
-
-You can customize your app by color title icon. You can do it manually, please refer to the offical docu. The guide will show an automated process with github actions. 
+You can customize the title, the logo and colors of your app.
 
 ## Customize
 
-copy _config fodler to config and.
-Chnage the content in the config folder
-icons
-color schema
-titles and bundle id in the config file
+### Manually
+You can customize the app manually. Please check the offical documentation on how to do this for [windows](https://docs.flutter.dev/deployment/windows), [linux](https://docs.flutter.dev/deployment/linux) or [macOS](https://docs.flutter.dev/deployment/macos). This guide will show an automated process with github actions. 
 
-run ./customize script (only on ubuntu)
+### Automated
+:::info 
+The automated customization script runs on linux systems only.
+:::
 
-copy the ./mml.app fodler to the os you will build the app for and build it from source.
-Consider to rename the fodler name on macos
+The [mml.app](https://github.com/we-kode/mml.app) provides one `_config` folder, where all configurations for the customization are included. Copy the `_config` folder to `config` and replace the configs with your custom needs.
+
+:::caution Filenames
+Please do not change the filenames in the config folder. Just replace them by your own files with the same filename.
+:::
+
+Icons you can [generate](https://www.appicon.co/) and replace the icons in the `icons` folder. You can [generate your custom color scheme](https://m3.material.io/theme-builder#/custom) and replace the color values in `lib_color_schemes.g.dart`.
+The title in different languages and the app id you can update in the app.cfg file. Also you can add here the url for your privacy policy and an url for your legal informations or leave them blank, so no urls will be set.
+
+To update run the `./customize` script. This script will clone the [mml.app](https://github.com/we-kode/mml.app) and replace all items with the items in the configuration. Copy the `./mml.app` folder to the os you like and [build the app from source](../setup/app).
 
 ## Github Action Workflow
 
-All the steps above can be done with github actions
+All the steps above can be done with github actions. Fork the [mml.app](https://github.com/we-kode/mml.app) and [customize](#automated) the app on your needs. The github workflow consists two actions. Sync fork for listen to new releases and Flutter CI to build the app, when new release is available. You need some [github secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets). The `SYNC_PAT` is a Personal Access Token with the right to create releases.
+For more information check the step by step guides [1](https://blog.auguron.com/deploying-flutter-apps-with-github-actions-c547c23c0e2f), [2](https://medium.com/team-rockstars-it/the-easiest-way-to-build-a-flutter-ios-app-using-github-actions-plus-a-key-takeaway-for-developers-48cf2ad7c72a), [3](https://damienaicheh.github.io/flutter/github/actions/2021/04/22/build-sign-flutter-ios-github-actions-en.html). 
 
-cretae a fork of the mml.app repo
-customize
-create workflows for lsiten on new releases.
+:::info 
+Replace all texts in <...Some text...> with your custom values. More comments are in code of actions.
+:::
 
 ### Listen to release tags
 
-```
+```yaml
 name: Sync fork with upstream
 
 on:
@@ -74,9 +81,9 @@ jobs:
 ```
 ### Build the app and release it.
 
-This workflow will cerate a aab release. If you want to create an apk please refere to the officialy docu.
+This workflow will create an ipa file release, which you can use to upload to the app store.
 
-```
+```yaml
 name: Flutter CI
 
 # Controls when the workflow will run
@@ -96,7 +103,7 @@ jobs:
       - name: Customizing
         run: |
           version="${{ github.ref_name }}"
-          ver_dump=$(echo "${version/-ecg/''}")
+          ver_dump=$(echo "${version/-mml/''}")
           chmod +x customize
           ./customize
           sed -i -E "s/       versionName flutterVersionName/       versionName \"$ver_dump\"/" "./mml.app/android/app/build.gradle"
@@ -105,71 +112,8 @@ jobs:
       - name: Artefact customized version
         uses: actions/upload-artifact@v3
         with:
-          name: ECG-Medialib-Custom
+          name: Medialib-Custom
           path: mml.app
-        
-  build-android:
-    runs-on: ubuntu-latest
-    needs: [prepare]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          name: ECG-Medialib-Custom
-      - uses: actions/setup-java@v2
-        with:
-          distribution: 'zulu'
-          java-version: '11'
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-      - name: Install project dependencies
-        run: flutter pub get
-      - name: Generate intermediates
-        run: |
-          flutter pub run build_runner build --delete-conflicting-outputs
-          flutter gen-l10n
-      - name: Write jks
-        uses: timheuer/base64-to-file@v1.1
-        with:
-          fileName: 'upload-ecgm.jks'
-          fileDir: './android/app/'
-          encodedString: ${{ secrets.ANDROID_JKS }}
-      - name: Write key.properties
-        run: |
-          echo "storePassword=${{ secrets.ANDROID_JKS_PASS }}" >> ./android/key.properties
-          echo "keyPassword=${{ secrets.ANDROID_JKS_PASS }}" >> ./android/key.properties
-          echo "keyAlias=ecgm" >> ./android/key.properties
-          echo "storeFile=upload-ecgm.jks" >> ./android/key.properties
-      - name: Build artifacts
-        run: |
-          flutter build appbundle --release
-      - name: Cleanup
-        run: |
-          rm ./android/app/upload-ecgm.jks
-          rm ./android/key.properties
-          mv build/app/outputs/bundle/release/app-release.aab build/app/outputs/bundle/release/ecgm-${{ github.ref_name }}.aab
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ECG-Medialib-Android
-          path: build/app/outputs/bundle/release
-  
-  release-android:
-    runs-on: ubuntu-latest
-    needs: [build-android]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          name: ECG-Medialib-Android
-      - name: Android Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: ecgm-${{ github.ref_name }}.aab
 
   build-ios:
     runs-on: macos-latest
@@ -178,10 +122,11 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
-          name: ECG-Medialib-Custom
+          name: Medialib-Custom
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+      # set your own developer id informations from your apple developer account for your app.
       - name: Install the Apple certificate and provisioning profile
         env:
           P12_BASE64: ${{ secrets.P12_BASE64 }}
@@ -220,7 +165,7 @@ jobs:
         run: xcodebuild -resolvePackageDependencies -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release
       - name: Build xArchive
         run: |
-          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release DEVELOPMENT_TEAM=$TEAM_ID -sdk 'iphoneos' -destination 'generic/platform=iOS' -archivePath build-output/ecgm-${{ github.ref_name }}.xcarchive PROVISIONING_PROFILE=$PROVISION_PROFILE_UID clean archive CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY"
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release DEVELOPMENT_TEAM=$TEAM_ID -sdk 'iphoneos' -destination 'generic/platform=iOS' -archivePath build-output/mml-${{ github.ref_name }}.xcarchive PROVISIONING_PROFILE=$PROVISION_PROFILE_UID clean archive CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY"
       - name: Export ipa
         run: |
           echo '<?xml version="1.0" encoding="UTF-8"?>' >> ios/ExportOptions.plist
@@ -235,18 +180,18 @@ jobs:
           echo '<string>manual</string>' >> ios/ExportOptions.plist
           echo '<key>provisioningProfiles</key>' >> ios/ExportOptions.plist
           echo '<dict>' >> ios/ExportOptions.plist
-          echo "<key>de.ecg.medialib</key>" >> ios/ExportOptions.plist
+          echo "<key>de.mml.medialib</key>" >> ios/ExportOptions.plist
           echo "<string>${{ secrets.PROVISION_PROFILE_UID }}</string>" >> ios/ExportOptions.plist
           echo '</dict>' >> ios/ExportOptions.plist
           echo '</dict>' >> ios/ExportOptions.plist
           echo '</plist>' >> ios/ExportOptions.plist
           cat ios/ExportOptions.plist
-          xcodebuild -exportArchive -archivePath build-output/ecgm-${{ github.ref_name }}.xcarchive -exportPath build-output/ios -exportOptionsPlist ios/ExportOptions.plist
-          mv build-output/ios/mml_app.ipa build-output/ios/ecgm-${{ github.ref_name }}.ipa
+          xcodebuild -exportArchive -archivePath build-output/mml-${{ github.ref_name }}.xcarchive -exportPath build-output/ios -exportOptionsPlist ios/ExportOptions.plist
+          mv build-output/ios/mml_app.ipa build-output/ios/mml-${{ github.ref_name }}.ipa
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ECG-Medialib-iOS
+          name: Medialib-iOS
           path: build-output/ios
       - name: Clean up
         if: ${{ always() }}
@@ -261,15 +206,16 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
-          name: ECG-Medialib-iOS
+          name: Medialib-iOS
       - name: iOS Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: ecgm-${{ github.ref_name }}.ipa
+          files: mml-${{ github.ref_name }}.ipa
 ```
-### Run build
+### Run action release
 
-snyc fork will in this example sync every week for a new reelase. You can start build manually by runnging the sync_frok action manually.
+The sync fork action in this example will sync every week and check for a new relase. You can start the sync fork action manually. The main action will be automatically triggered if a new release exists.
+The result will be an ipa file you can upload to the app store.
