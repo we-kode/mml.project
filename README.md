@@ -1,43 +1,15 @@
-[![Deploy to GitHub Pages](https://github.com/we-kode/mml.project/actions/workflows/deploy.yml/badge.svg?branch=master)](https://github.com/we-kode/mml.project/actions/workflows/deploy.yml)
+![GitHub](https://img.shields.io/github/license/we-kode/mml.project?logo=license&style=for-the-badge) ![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/we-kode/mml.project/deploy.yml?label=Deploy%20to%20GitHub%20Pages&logo=github&style=for-the-badge)
 
-# Website
+# My Media Lib
 
-This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
+My Media Lib is an self hosted media library for your audio files. Host your own audio files on your own server and stream them in Android or iOS app. Only registered and authorized phones (clients) have access to your own media library.
 
-### Installation
+Host the backend on your own private server. Build your custom administration and client app with your own title, icon and color scheme for your family, friends, members of your organization or your customers.
 
-```
-$ yarn
-```
+The project consists of an admin app for desktop, linux or macOS where you can manage your audio files - known as records, admin users, groups, clients and monitor statistics of usage.
 
-### Local Development
+For more information check the [official documentation](https://we-kode.github.io/mml.project/).
 
-```
-$ yarn start
-```
+## Contribution
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
-
-### Build
-
-```
-$ yarn build
-```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-### Deployment
-
-Using SSH:
-
-```
-$ USE_SSH=true yarn deploy
-```
-
-Not using SSH:
-
-```
-$ GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+Please check the official documentation on [how to contribute](https://we-kode.github.io/mml.project/contribution).
