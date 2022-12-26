@@ -5,7 +5,7 @@ sidebar_position: 3
 # App
 
 The mobile app can be used on android and ios devices. We do not provide binary releases.You have to build the app by your own.
-Before you build your app you can [customize](../customize) it by adding a custom icon, title or color scheme.
+Before you build your app you can [customize](/category/customization) it by adding a custom icon, title or color scheme.
 We will create release tags when new features or improvemnets are available. So you can automate your build by listening on them.
 
 ## Build from source
