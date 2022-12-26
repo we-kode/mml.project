@@ -299,7 +299,7 @@ The app keys are Guids. [Generate](https://www.guidgen.com/) two random Guids as
 
 ## Configure identity service
 
-The [identity service](https://github.com/we-kode/mml.identity) is used for managing the users, clients and logins of [My Media Lib](../intro).
+The [identity service](https://github.com/we-kode/mml.identity) is used for managing the users, clients and logins of [My Media Lib](/).
 
 ### Create folder
 Create the folder where the configuration will be.
@@ -413,7 +413,7 @@ sudo docker compose up wekode.mml.identity -d
 
 ## Configure media service
 
-The [media service](https://github.com/we-kode/mml.media) is used for managing the uploaded [records](../concepts/records) of [My Media Lib](../intro).
+The [media service](https://github.com/we-kode/mml.media) is used for managing the uploaded [records](../concepts/records) of [My Media Lib](/).
 
 ### Create folder
 
