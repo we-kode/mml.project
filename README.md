@@ -10,6 +10,10 @@ The project consists of an admin app for desktop, linux or macOS where you can m
 
 For more information check the [official documentation](https://we-kode.github.io/mml.project/).
 
+## Project structure
+
+The mml project consists of [multiple repositories](https://github.com/we-kode?q=.mml&type=all&language=&sort=). This repository is for documentation and issues only.
+
 ## Contribution
 
 Please check the official documentation on [how to contribute](https://we-kode.github.io/mml.project/contribution).
