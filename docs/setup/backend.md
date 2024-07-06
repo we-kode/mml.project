@@ -176,6 +176,56 @@ sudo chown -R 1001:1001 db/
 sudo docker compose up wekode.mml.db -d
 ```
 
+### Upgrading postgres version
+
+It is recommended to use a fixed version of the postgres docker image and not the latest tag. When you want to upgrade to newer version of postgres follow the following steps:
+
+#### Stop all running services
+
+```bash
+docker compose down
+```
+
+#### Create dumps of all databases you want to backup
+
+```bash
+docker exec -it wekode.mml.db pg_dump <database> -U <superuser> > <database>.sql
+```
+
+#### Stop Database service
+
+```bash
+docker compose down wekode.mml.db --volumes
+```
+
+#### Backup the db data directory
+
+```bash
+mv <db-folder-on-host>/ db-old/
+mkdir <db-folder-on-host>
+```
+#### Prepare the new version
+
+Increment the version of postgres in the env file and start the container.
+
+```bash
+docker compose up -d wekode.mml.db
+```
+
+#### Import the db dumps
+
+```bash
+docker exec -i wekode.mml.db psql -U <superuser> -d <database> < <database>.sql
+```
+
+#### Clean up
+
+```bash
+rm -rf db-old
+rm <database>.sql
+docker compose up -d
+```
+
 ## Configure cache service
 
 [Redis](https://redis.io/) is used as cache. Setup redis with following steps.
