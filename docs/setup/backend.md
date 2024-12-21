@@ -189,13 +189,14 @@ docker compose down
 #### Create dumps of all databases you want to backup
 
 ```bash
+docker compose up wekode.mml.db -d
 docker exec -it wekode.mml.db pg_dump <database> -U <superuser> > <database>.sql
 ```
 
 #### Stop Database service
 
 ```bash
-docker compose down wekode.mml.db --volumes
+docker compose down wekode.mml.db
 ```
 
 #### Backup the db data directory
@@ -215,7 +216,7 @@ docker compose up -d wekode.mml.db
 #### Import the db dumps
 
 ```bash
-docker exec -i wekode.mml.db psql -U <superuser> -d <database> < <database>.sql
+docker exec -i wekode.mml.db psql -U <superuser|dbuser> -d <database> -f <database>.sql
 ```
 
 #### Clean up
