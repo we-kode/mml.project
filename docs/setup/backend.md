@@ -226,6 +226,11 @@ rm <database>.sql
 docker compose up -d
 ```
 
+### Export records to csv
+
+Run `\copy (Select record_id, title, date, track_number, duration, a.album_name as album, ar.name as artist, g.name as genre FROM records r JOIN albums a ON a.album_id = r.album_id JOIN artists ar ON ar.artist_id = r.artist_id JOIN genres g ON g.genre_id = r.genre_id) TO '/data/records.csv' WITH DELIMITER ',' CSV HEADER;` 
+as media database user inside the db container to export the list of records and the metadata to csv to use it for reoporting or other tools.
+
 ## Configure cache service
 
 [Redis](https://redis.io/) is used as cache. Setup redis with following steps.
