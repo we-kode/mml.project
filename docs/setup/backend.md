@@ -419,7 +419,7 @@ cat ~/medialib/identity/appsettings.json
 #### Replace the rabbitmq user and password with the values you [defined](#configure-message-bus) when setting up the message bus service.
 
 ```json {3,4}
-"MassTransit": {
+"MessageBus": {
     "Host": "wekode.mml.mbus",
     "User": "guest",
     "Password": "guest",
@@ -536,7 +536,7 @@ cat ~/medialib/identity/appsettings.json
 #### Replace the rabbitmq user and password with the values you [defined](#configure-message-bus) when setting up the message bus service.
 
 ```json {3,4}
-"MassTransit": {
+"MessageBus": {
     "Host": "wekode.mml.mbus",
     "User": "guest",
     "Password": "guest",
