@@ -1,0 +1,33 @@
+# My Media Lib
+
+> My Media Lib is a self-hosted, private media library for audio files. The system provides backend services, administration and mobile clients, and supports streaming and offline playlists.
+
+## Product documentation
+
+- [Introduction](https://we-kode.github.io/mml.project/): Product overview and repository structure.
+- [Architecture](https://we-kode.github.io/mml.project/architecture): System architecture and service boundaries.
+- [Development Workflow](https://we-kode.github.io/mml.project/development): Multi-repository development and documentation workflow.
+
+## Setup
+
+- [Backend setup](https://we-kode.github.io/mml.project/setup/backend): Configure and run the backend services and infrastructure.
+- [Mobile app setup](https://we-kode.github.io/mml.project/setup/app): Build and customize the mobile client.
+- [Administration app setup](https://we-kode.github.io/mml.project/setup/administration-app): Build and customize the desktop administration client.
+
+## Concepts
+
+- [Admins](https://we-kode.github.io/mml.project/concepts/admins): Administrative users and permissions.
+- [Clients](https://we-kode.github.io/mml.project/concepts/clients): Registered devices and client applications.
+- [Groups](https://we-kode.github.io/mml.project/concepts/groups): Group-based access to media.
+- [Records](https://we-kode.github.io/mml.project/concepts/records): Audio records managed by the Media service.
+- [Offline playlists](https://we-kode.github.io/mml.project/concepts/offline_playlists): Downloaded media and offline playback.
+
+## Customization
+
+- [Administration app customization](https://we-kode.github.io/mml.project/customize/administration-app): Customize the desktop app.
+- [Android customization](https://we-kode.github.io/mml.project/customize/android): Customize Android assets and configuration.
+- [iOS customization](https://we-kode.github.io/mml.project/customize/ios): Customize iOS assets and configuration.
+
+## Contribution
+
+- [Contribution guide](https://we-kode.github.io/mml.project/contribution): Bug reports, feature requests, and project contribution guidance.
