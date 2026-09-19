@@ -1,0 +1,26 @@
+---
+sidebar_position: 25
+---
+
+# Development Workflow
+
+My Media Lib is maintained as multiple repositories. A change is complete only when its implementation, validation, and relevant public documentation agree.
+
+## Repository boundaries
+
+- Flutter clients are maintained in `mml.app`, `mml.app-just-register`, and `mml.administration-app`.
+- `mml.identity` owns authentication, admins, and registered clients.
+- `mml.media` owns records and media processing.
+- `mml.messages` contains shared backend event contracts.
+- `mml.deployment` assembles the backend infrastructure and reverse proxy.
+- `mml.demo` provides a mock HTTPS backend for client testing.
+
+## Change workflow
+
+1. Read the repository-specific `CLAUDE.md`, README, and nearby tests.
+2. Check all consumers when an API, event, configuration, database, or serialized format changes.
+3. Run the narrowest relevant formatter, analyzer, build, or test first.
+4. Update the relevant page in this documentation repository whenever setup, architecture, security, configuration, concepts, or user-visible behavior changes.
+5. Run `npm run typecheck` and `npm run build` in `mml.project` before considering documentation changes complete.
+
+Keep credentials, private certificates, local environment files, generated output, and dependency caches out of source control. Prefer additive and backward-compatible contract changes; coordinate migrations and breaking changes across all affected repositories.
