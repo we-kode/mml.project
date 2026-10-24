@@ -28,6 +28,15 @@ cd ~/medialib
 
 Copy [`docker-compose.yml`](https://github.com/we-kode/mml.deployment/blob/develop/docker-compose.yml) and the [`.env`](https://github.com/we-kode/mml.deployment/blob/develop/.env) from the repository to `~/medialib` on server.
 
+### Instance name
+
+Set a name for your instance in the `.env` file. The name identifies the owner of [records](../concepts/records) and your instance for [partner instances](../concepts/federation). It may contain letters, digits, `.`, `_` and `-` with up to 64 characters and must not be changed later. The media service does not start with an invalid name.
+
+```bash
+## The system tenant name to be used e.g in federation. The INSTANCE value should not contain spaces.
+INSTANCE=my-media-lib
+```
+
 ## Create mml user
 
 All docker contaienrs will run for user id `1001` and group id `1001`. So cretae group and user first.
@@ -90,7 +99,11 @@ CERT_NAME=domain.name
 
 ### Encryption and Signing
 
-Two additional certificates need to be generated named `identity.encrypt.pfx` and `identity.sign.pfx`. Place them in the `~/medialib/certs` folder on server. Please check the [official documentation](https://documentation.openiddict.com/) on [how to generate](https://documentation.openiddict.com/configuration/encryption-and-signing-credentials.html#registering-a-certificate-recommended-for-production-ready-scenarios) them.
+The [identity service](#configure-identity-service) signs and encrypts its tokens with two certificates. They are created automatically on the first start in the folder `IDENTITY_SECRETS_PATH` as `wekode.mml.signing.pfx` and `wekode.mml.encryption.pfx`. No certificate has to be generated manually.
+
+Keep this folder when updating the service. If the certificates are lost, new ones are created and all [admins](../concepts/admins) have to log in again.
+
+The certificates can be protected with a password by setting `SIGN_SECRET` and `ENCRYPT_SECRET` in the `.env` file. You can generate a random secret using `openssl rand -base64 32`. Certificates created without password are protected automatically when a secret is set later. Do not change a secret afterwards, otherwise the certificate cannot be read anymore.
 
 ## Configure database service
 
@@ -337,6 +350,7 @@ SSL_PORT=5555
 ## Path to the folder where the default.conf.template file is stored on host.
 CONF_TEMPLATE=/home/media/medialib/proxy
 ## Upload file limit to prevent huge files to be uplaoded to server.
+## Must be larger than Federation:ChunkSizeMb of every partner instance (default 32 MB), which sends records to this instance.
 #FILE_UPLOAD_LIMIT=100m
 ...
 ```
@@ -394,10 +408,8 @@ cat ~/medialib/identity/appsettings.json
 
 #### Set issuer url to your domain and port you are using as ssl port.
 
-```json {9}
+```json {7}
 "OpenId": {
-    "EncryptionCert": "/certs/identity.encrypt.pfx",
-    "SigningCert": "/certs/identity.sign.pfx",
     "AccessTokenLifetimeMinutes": "60",
     "RefreshTokenLifetimeMinutes": "43200",
     "RefreshTokenReuseLeewaySeconds": "10",
@@ -458,11 +470,17 @@ IDENTITY_VERSION=1.0.2
 ## Path and name on host machine where the appsettings is stored.
 ## for example /app/config/appsettings.json
 IDENTITY_APPSETTINGS=/home/mml/medialib/identity/appsettings.json
+## Optional. Secrets to protect the encryption and signing certificates.
+#ENCRYPT_SECRET=
+#SIGN_SECRET=
+## The path where the certificates of the identity are stored.
+IDENTITY_SECRETS_PATH=/home/mml/medialib/identity/secrets
 ```
 
-Set user rights of the folder to the [docker user](#create-mml-user) and start the service.
+The [encryption and signing certificates](#encryption-and-signing) are created in `IDENTITY_SECRETS_PATH` on the first start. Set user rights of the folders to the [docker user](#create-mml-user) and start the service.
 
 ```bash
+mkdir -p identity/secrets
 sudo chown -R 1001:1001 identity/
 sudo docker compose up wekode.mml.identity -d
 ```
@@ -517,9 +535,8 @@ cat ~/medialib/identity/appsettings.json
 
 #### Set issuer url to your domain and port you are using as ssl port.
 
-```json {3}
+```json {2}
 "OpenId": {
-    "EncryptionCert": "/etc/ssl/certs/identity.encrypt.pfx",
     "Issuer": "https://<url>:<port>/"
   },
 ```
@@ -548,6 +565,41 @@ cat ~/medialib/identity/appsettings.json
   }
 ```
 
+#### Federation
+
+[Federation](../concepts/federation) synchronizes records with other My Media Lib instances. It is always enabled. Partners reach this instance at the issuer address configured in `OpenId:Issuer`. Set `PublicUrl` only if partners use another public HTTPS address, with the [ssl port](#configure-reverse-proxy) if it is not 443.
+
+```json
+"Federation": {
+    "PublicUrl": "",
+    "AllowPrivateNetworks": false,
+    "KeysPath": "/secrets/federation",
+    "KeyRotationDays": 90,
+    "KeyPublishLeadDays": 7,
+    "KeyRetireDays": 14,
+    "InvitationValidityHours": 24,
+    "ChunkSizeMb": 32,
+    "MaxRecordSizeMb": 2048,
+    "UploadPath": "/tmp/records/federation",
+    "UploadRetentionDays": 7
+  },
+```
+
+| Setting | Description |
+| --- | --- |
+| `PublicUrl` | Public HTTPS address partners reach this instance at. Empty uses `OpenId:Issuer`. |
+| `AllowPrivateNetworks` | Allows partners with addresses in private networks, e.g. in a local network. Disabled by default. |
+| `KeysPath` | Folder of the signing keys. Must be inside the secrets volume `MEDIA_SECRETS_PATH` configured below. |
+| `KeyRotationDays`, `KeyPublishLeadDays`, `KeyRetireDays` | Rotation of the signing keys: a new key every 90 days, published 7 days before use, the old key is removed 14 days later. |
+| `InvitationValidityHours` | Validity of invitation codes. |
+| `ChunkSizeMb` | Size of the parts records are sent in. Must be smaller than the `FILE_UPLOAD_LIMIT` of every partner. |
+| `MaxRecordSizeMb` | Largest record accepted from partners. |
+| `UploadPath`, `UploadRetentionDays` | Folder of unfinished transfers from partners and the days they are kept without progress. |
+
+:::caution Instance name
+Partners are identified by the `INSTANCE` name in the `.env` file. Every instance needs a unique name consisting of letters, digits, `.`, `_` or `-` with up to 64 characters. Do not change the name after partners are registered.
+:::
+
 ### Update .env file and start service
 Update the required values in the `~/medialib/.env` file.
 
@@ -566,13 +618,23 @@ MEDIA_VERSION=1.2.1
 MEDIA_APPSETTINGS=/home/mml/medialib/media/appsettings.json
 ## Path to the folder on host where to backup the uploaded and indexed records.
 VOL_RECORDS=/home/mml/medialib/media/records
+## The path where the federation keys of the media service are stored.
+MEDIA_SECRETS_PATH=/home/mml/medialib/media/secrets
+## Optional. Secret to encrypt the federation keys stored in MEDIA_SECRETS_PATH.
+#FEDERATION_KEY_SECRET=
 ```
 
-Set user rights of the folder to the [docker user](#create-mml-user) and start the service.
+The signing keys of the [federation](../concepts/federation) are created automatically in `MEDIA_SECRETS_PATH`. Keep this folder when updating the service, otherwise partners have to load new keys. The folder must be writable by the [docker user](#create-mml-user); the service cannot create keys otherwise and federation requests fail.
+
+`FEDERATION_KEY_SECRET` encrypts the stored keys. You can generate a random secret using `openssl rand -base64 32`. Keys stored without encryption are encrypted automatically when the secret is set later. If the secret is changed or removed, existing encrypted keys cannot be read anymore and the service reports an error. In this case delete the files in `MEDIA_SECRETS_PATH`: new keys are created and partners load them automatically.
+
+Set user rights of the folders to the [docker user](#create-mml-user) and start the service.
 
 ```bash
+mkdir -p media/secrets
 sudo chown -R 1001:1001 media/
 sudo chown -R 1001:1001 media/records
+sudo chown -R 1001:1001 media/secrets
 sudo docker compose up wekode.mml.media -d
 ```
 

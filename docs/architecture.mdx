@@ -7,3 +7,7 @@ import DocusaurusSvg from '../static/img/arc.svg';
 # Architecture
 
 <DocusaurusSvg className="arcImage"/>
+
+## Federation
+
+Instances can synchronize [records](./concepts/records) with partner instances. The Media services of the partners communicate directly over HTTPS through the reverse proxy; Identity is not involved. Requests between partners are signed with keys owned by the Media service, records are transferred in resumable parts and admins are informed over the SignalR hub `/hub/federation`. See [Federation](./concepts/federation) for details.
