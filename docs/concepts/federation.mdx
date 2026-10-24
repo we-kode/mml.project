@@ -1,0 +1,105 @@
+---
+sidebar_position: 6
+---
+
+# Federation
+
+Federation synchronizes [records](./records) between independent My Media Lib instances. Two instances which are registered with each other are called _partners_. The instance where a record was uploaded is its _owner_. The Media service of each instance talks directly to the Media service of its partners over HTTPS; no central server is involved.
+
+Federation is always enabled, but nothing is synchronized until an admin registers a partner with an invitation code and creates outgoing rules. Partners reach the instance at the address of the identity issuer, see the [backend setup](../setup/backend#federation).
+
+## Registration
+
+A registration needs the approval of both admins and is protected by a one-time invitation code.
+
+1. The admin of instance **B** creates an invitation in the admin app under **Sync → Invitations**. The invitation is created only after **Create** is confirmed in the dialog; the dialog then shows the address of instance B and the code. The code has the format `XXXXX-XXXXX-XXXXX-XXXXX`, is shown only once and can be used once within the validity selected in the dialog: 24 hours (default), 3, 7, 30 or 90 days. Pass both to the admin of instance A outside of the app.
+2. The admin of instance **A** opens **Sync → Instances**, adds a partner and enters the HTTPS address of B and the invitation code. A sends a signed registration request to B. B shows the partner as _Requested_.
+3. B checks the invitation before it contacts A, loads the public keys of A and verifies the signature of the request. The admins of B are notified in the admin app and see the partner as _Waiting for approval_.
+4. The admin of B approves or rejects the request in the partner details.
+   - **Approve:** The dialog names the count of outgoing rules, which apply to A from then on. B informs A. Both instances show the partner as _Linked_ and the synchronization is enabled according to the [rules](#rules). If A is not reachable, B retries in the background and shows _Approved, response pending_ meanwhile.
+   - **Reject:** B informs A and deletes the request. A shows the partner as _Rejected_ until its admin removes it. A new request needs a new invitation code.
+
+Deleting a request which waits for approval in the partner list rejects it as well.
+
+### Keys
+
+Partners authenticate every request with a signed JSON Web Token in the format of `private_key_jwt` ([RFC 7523](https://datatracker.ietf.org/doc/html/rfc7523)), signed with an RSA key (PS256). Each instance publishes its public keys as JSON Web Key Set.
+
+The keys are rotated automatically without any admin interaction or new registration:
+
+- A new key is created every 90 days and published 7 days before it is used.
+- Partners are informed about new keys and refresh the public keys of their partners daily and whenever a request is signed by an unknown key.
+- A replaced key is removed 14 days after its successor became active.
+
+The keys are stored in the secrets volume of the Media service and can be encrypted with `FEDERATION_KEY_SECRET`.
+
+## Rules
+
+Rules decide which records are synchronized. They are managed in the admin app under **Sync → Rules** and apply to all partners, unless they are restricted to selected instances. A rule for all partners also applies to partners linked later. The partner details show the rules which apply to the partner.
+
+- **Outgoing rules** select own records, which are sent to the partners. Without an outgoing rule nothing is sent. Besides album, artist and genre an outgoing rule can select [groups](./groups): then only records in one of these groups are sent, e.g. all records of one group.
+- **Incoming rules** assign records received from the partners to [groups](./groups). Received records without a matching rule are not assigned to any group and can be found with the filter **Unassigned** in the records overview.
+
+A rule filters by album, artist and genre. The values are selected from the albums, artists and genres of this instance and stored by their id. Each criterion can contain several values:
+
+- Values of one criterion are combined with OR, criteria are combined with AND.
+- An empty criterion matches all records, so a rule without any value matches every record.
+- Received records are assigned to the albums, artists and genres of this instance by name, ignoring the case and surrounding spaces. Values which only exist on the partner cannot be selected.
+- Albums, artists and genres used in a rule are kept, even if no record refers to them anymore. They are removed with the last rule using them.
+
+If several incoming rules match a record, the most specific one is used: a rule restricted to the sending instance wins over rules for all partners, then the rule with more criteria wins, then album before artist before genre, then the rule with fewer values, then the older rule.
+
+When an instance is removed, rules restricted to this instance only are deleted, so they do not apply to all partners afterwards.
+
+## Synchronization
+
+- Rules apply only to records uploaded after the rule was created. Existing records are not synchronized automatically.
+- Admins can synchronize selected records or folders manually with **Synchronize** in the records overview or in the record details. Records already sent to a partner, records received from a partner and records matching no outgoing rule are skipped.
+- Every record is sent only once to each partner.
+- Records with the same file as an existing record are skipped by the partner and logged in the [audit log](#audit-log).
+- Changes of the metadata by the owner are synchronized to all partners which received the record.
+- Received records are never forwarded to other partners.
+- Admins of a partner can only change the groups and the lock of received records. All other properties are managed by the owner.
+- When the owner deletes a record, it is deleted on all partners, even if it is locked there.
+- A partner can delete a received record locally. The owner is not informed and does not send the record again.
+
+Transfers run in the background. Failed transfers are retried with growing delays of up to 6 hours and given up after 30 attempts. Large records are sent in parts of 32 MB (`Federation:ChunkSizeMb`), so an interrupted transfer continues where it stopped. The partner verifies the size, the SHA-256 hash and the MP3 format before it adds the record.
+
+:::caution Upload limits
+The parts must be smaller than the upload limit (`FILE_UPLOAD_LIMIT`) of the receiving instance. A record larger than `Federation:MaxRecordSizeMb` (2048 MB by default) of the partner is rejected.
+:::
+
+## Remove a registration
+
+A registration can be removed in the partner details or by deleting the partner in the partner list. The partner is informed and also removes the registration. Nothing is deleted automatically; the admin decides in the dialog:
+
+- **Keep records:** Records received from the partner stay on this instance and can be deleted manually. The partner keeps the records of this instance.
+- **Delete synchronized records:** Records received from the partner are deleted on this instance, locked ones too, and the partner is asked to delete the records of this instance.
+
+If the partner is not reachable, the admin can remove the registration locally only. The partner then keeps its registration and the records of this instance until its admin removes them.
+
+## Audit log
+
+Every registration step, transfer, update, deletion and key change is written to the audit log under **Sync → Audit log**. The admin app shows the log as a full-width, paged table with a fixed header and footer; only the rows scroll. Columns can be resized by dragging their border in the header, a double click restores the default width; wider columns scroll the table horizontally. Long messages are shortened to one line and shown completely as tooltip and in the details of an entry. Its columns are date, result, direction, action, partner instance, record count and message. Result and direction are shown as colored icons; their names appear as tooltip and in the details of an entry, which also list source and target instance, the titles of the affected records and the transaction id. Records removed since then are shown as no longer available.
+
+- Date, result, direction, action and instance can be sorted. A click on a column header switches between ascending, descending and not sorted. Several columns can be sorted at once; their priority follows the order in which they were sorted and is shown next to the arrow. Without sorting, the newest entries are shown first.
+- The filter field above the table searches the messages. Date, result, direction, action and instance have a filter in their header: the date opens a period dialog, the other columns a multi-selection dialog. Active filters are highlighted, can be removed per column or reset at once.
+- Entries can be selected across pages and filters and deleted with **Delete selected** after a confirmation with the count of entries.
+- Sending, updating or deleting a record at a partner is shown as _Pending_ as soon as it is scheduled. The same entry changes to _Success_, _Skipped_ or _Failed_; a failed attempt, which is retried, shows the error and the time of the next attempt and changes to _Success_ when a later attempt succeeds.
+- New entries are announced above the table and loaded on demand.
+- A red dot at **Sync** in the navigation notifies the admin about registration requests, changes made by a partner, for example received, updated, deleted or removed records, and failed actions. Key changes are only logged.
+
+The direction is determined from this instance's point of view: entries whose source is this instance are outgoing. Entries are deleted automatically after the retention selected in the admin app under **Settings → Sync → Keep audit log**: 1 week, 1 month, 3 months (default), 6 months, 1 year or never.
+
+The Media service additionally stores for every synchronized record which partner it was sent to or received from, together with the transaction id, since each instance uses its own record ids.
+
+## Security
+
+- Partners are only contacted over HTTPS. Redirects are not followed.
+- Partner addresses in private networks (for example `192.168.x.x` or `localhost`) are blocked unless `Federation:AllowPrivateNetworks` is enabled.
+- Requests of partners are accepted only with a valid, unexpired signature and are protected against replay. Registration requests are only accepted with an open invitation.
+- Each partner can have at most 10 unfinished transfers at a time. Unfinished transfers are removed after 7 days without progress and when the registration is removed.
+
+:::info Single Media container
+The replay protection is kept in memory. Run only one container of the Media service per instance.
+:::

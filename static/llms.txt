@@ -13,6 +13,7 @@
 - [Backend setup](https://we-kode.github.io/mml.project/setup/backend): Configure and run the backend services and infrastructure.
 - [Mobile app setup](https://we-kode.github.io/mml.project/setup/app): Build and customize the mobile client.
 - [Administration app setup](https://we-kode.github.io/mml.project/setup/administration-app): Build and customize the desktop administration client.
+- [Upgrade to the federation release](https://we-kode.github.io/mml.project/setup/upgrade): Configuration changes when updating an existing backend.
 
 ## Concepts
 
@@ -21,6 +22,7 @@
 - [Groups](https://we-kode.github.io/mml.project/concepts/groups): Group-based access to media.
 - [Records](https://we-kode.github.io/mml.project/concepts/records): Audio records managed by the Media service.
 - [Offline playlists](https://we-kode.github.io/mml.project/concepts/offline_playlists): Downloaded media and offline playback.
+- [Federation](https://we-kode.github.io/mml.project/concepts/federation): Synchronization of records between partner instances.
 
 ## Customization
 

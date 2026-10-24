@@ -52,3 +52,22 @@ The records will be displayed grouped by the date and tracknumber in a flat view
     dark: useBaseUrl('/img/records_filters.png'),
   }}
 />
+
+## Records of partner instances
+
+With [federation](./federation) records are synchronized with partner instances. The instance where a record was uploaded is its owner.
+
+The records overview shows the synchronization state of each record with a symbol on the cover:
+
+- **Sync arrow down:** The record was received from a partner. The owner is shown in italics below the title. Its metadata can only be changed by the owner; admins can change the groups and the lock of these records.
+- **Sync arrow up:** The record was sent to at least one partner.
+- **Sync problem:** Sending, updating or deleting the record at a partner failed or is retried after an error. **Synchronize** sends the record again.
+
+The record details show the owner and when the record was received, or the partners an own record was sent to, and the problems per partner with the error and the next attempt. The filter **Synchronization** in the records overview shows the records of the selected states.
+
+The admin app offers two additional filters in the records overview:
+
+- **Unassigned** shows records without any group, e.g. received records which matched no incoming rule.
+- **Records of instance** shows records owned by the selected instances.
+
+Own records and folders can be sent to partners with **Synchronize** in the multi selection of the records overview or in the record details. Only records matching an outgoing rule of a partner and not sent to it yet are synchronized.
