@@ -12,7 +12,7 @@ Federation is always enabled, but nothing is synchronized until an admin registe
 
 A registration needs the approval of both admins and is protected by a one-time invitation code.
 
-1. The admin of instance **B** creates an invitation in the admin app under **Sync → Invitations**. The invitation is created only after **Create** is confirmed in the dialog; the dialog then shows the address of instance B and the code. The code has the format `XXXXX-XXXXX-XXXXX-XXXXX`, is shown only once and can be used once within 24 hours. Pass both to the admin of instance A outside of the app.
+1. The admin of instance **B** creates an invitation in the admin app under **Sync → Invitations**. The invitation is created only after **Create** is confirmed in the dialog; the dialog then shows the address of instance B and the code. The code has the format `XXXXX-XXXXX-XXXXX-XXXXX`, is shown only once and can be used once within the validity selected in the dialog: 24 hours (default), 3, 7, 30 or 90 days. Pass both to the admin of instance A outside of the app.
 2. The admin of instance **A** opens **Sync → Instances**, adds a partner and enters the HTTPS address of B and the invitation code. A sends a signed registration request to B. B shows the partner as _Requested_.
 3. B checks the invitation before it contacts A, loads the public keys of A and verifies the signature of the request. The admins of B are notified in the admin app and see the partner as _Waiting for approval_.
 4. The admin of B approves or rejects the request in the partner details.

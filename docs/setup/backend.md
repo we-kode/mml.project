@@ -32,6 +32,19 @@ Copy [`docker-compose.yml`](https://github.com/we-kode/mml.deployment/blob/devel
 
 Set a name for your instance in the `.env` file. The name identifies the owner of [records](../concepts/records) and your instance for [partner instances](../concepts/federation). It may contain letters, digits, `.`, `_` and `-` with up to 64 characters and must not be changed later. The media service does not start with an invalid name.
 
+The Media service stores the name at the first start and refuses to start, if `INSTANCE` differs from it later, since the owner of records, the registrations of partners and the access tokens depend on the name. The names are compared case sensitive. Identity and Media must use the same name.
+
+:::caution Rename an instance on purpose
+Only rename an instance if you accept to register all partners again. Stop the services and replace `old-name` and `new-name` in the Media database:
+
+```sql
+UPDATE settings SET value = 'new-name' WHERE key = 'InstanceName';
+UPDATE records SET owner_instance = 'new-name' WHERE owner_instance = 'old-name';
+```
+
+Then set `INSTANCE=new-name` in the `.env` file and start the services. Admins and clients have to log in again, since the access tokens contain the name. Partners still know the instance by its old name: remove the registration of the instance at every partner and register it again with a new invitation. Entries of the audit log keep the old name.
+:::
+
 ```bash
 ## The system tenant name to be used e.g in federation. The INSTANCE value should not contain spaces.
 INSTANCE=my-media-lib
@@ -577,11 +590,11 @@ cat ~/medialib/identity/appsettings.json
     "KeyRotationDays": 90,
     "KeyPublishLeadDays": 7,
     "KeyRetireDays": 14,
-    "InvitationValidityHours": 24,
     "ChunkSizeMb": 32,
     "MaxRecordSizeMb": 2048,
     "UploadPath": "/tmp/records/federation",
-    "UploadRetentionDays": 7
+    "UploadRetentionDays": 7,
+    "MaxOpenTransfers": 10
   },
 ```
 
@@ -591,13 +604,13 @@ cat ~/medialib/identity/appsettings.json
 | `AllowPrivateNetworks` | Allows partners with addresses in private networks, e.g. in a local network. Disabled by default. |
 | `KeysPath` | Folder of the signing keys. Must be inside the secrets volume `MEDIA_SECRETS_PATH` configured below. |
 | `KeyRotationDays`, `KeyPublishLeadDays`, `KeyRetireDays` | Rotation of the signing keys: a new key every 90 days, published 7 days before use, the old key is removed 14 days later. |
-| `InvitationValidityHours` | Validity of invitation codes. |
 | `ChunkSizeMb` | Size of the parts records are sent in. Must be smaller than the `FILE_UPLOAD_LIMIT` of every partner. |
 | `MaxRecordSizeMb` | Largest record accepted from partners. |
 | `UploadPath`, `UploadRetentionDays` | Folder of unfinished transfers from partners and the days they are kept without progress. |
+| `MaxOpenTransfers` | Unfinished transfers one partner may have at the same time. Further transfers are rejected until one is finished or removed. |
 
 :::caution Instance name
-Partners are identified by the `INSTANCE` name in the `.env` file. Every instance needs a unique name consisting of letters, digits, `.`, `_` or `-` with up to 64 characters. Do not change the name after partners are registered.
+Partners are identified by the `INSTANCE` name in the `.env` file. Every instance needs a unique name consisting of letters, digits, `.`, `_` or `-` with up to 64 characters. Do not change the name after the first start, the Media service refuses to start with another name, see [Instance name](#instance-name).
 :::
 
 ### Update .env file and start service

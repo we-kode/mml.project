@@ -50,7 +50,7 @@ MEDIA_SECRETS_PATH=/home/mml/medialib/media/secrets
 ```
 
 :::danger Set the instance name before the first start
-On the first start the Media service marks all existing records as owned by `INSTANCE`. Set the final name before starting the services and do not change it afterwards. The name may contain letters, digits, `.`, `_` and `-` with up to 64 characters and must be unique among your partner instances.
+On the first start the Media service marks all existing records as owned by `INSTANCE`. Set the final name before starting the services and do not change it afterwards. The Media service stores the name on the first start and refuses to start with another name, see [Instance name](./backend#instance-name). The name may contain letters, digits, `.`, `_` and `-` with up to 64 characters and must be unique among your partner instances.
 :::
 
 Create the secrets folders and set the user rights:
@@ -116,11 +116,11 @@ In `media/appsettings.json`:
     "KeyRotationDays": 90,
     "KeyPublishLeadDays": 7,
     "KeyRetireDays": 14,
-    "InvitationValidityHours": 24,
     "ChunkSizeMb": 32,
     "MaxRecordSizeMb": 2048,
     "UploadPath": "/tmp/records/federation",
-    "UploadRetentionDays": 7
+    "UploadRetentionDays": 7,
+    "MaxOpenTransfers": 10
   },
   "MessageBus": {
     ...
