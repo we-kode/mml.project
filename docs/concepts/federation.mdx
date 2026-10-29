@@ -33,6 +33,15 @@ The keys are rotated automatically without any admin interaction or new registra
 
 The keys are stored in the secrets volume of the Media service and can be encrypted with `FEDERATION_KEY_SECRET`.
 
+### Address changes
+
+The address of a partner can change without a new registration, because partners identify each other by instance name and keys:
+
+- **Automatically:** When the public address of an instance changes (`Federation:PublicUrl`, or the identity issuer), the Media service informs its linked partners and the partners it requested a registration at after the next start. Partners whose request was approved, but who did not receive the approval yet, are informed as soon as they received it. The message is signed with the known key. The partner checks the new address, stores it and retries waiting and failed transfers immediately.
+- **Manually:** If a partner was not informed, for example because it was not reachable, the admin changes the address in the partner details with **Change address**.
+
+In both cases the instance at the new address must have the same name and prove that it owns one of the known keys: it signs a random value, which is checked with the stored public keys of the partner. Public keys can be copied, but the signature can only be created by the partner itself, so a registration cannot be redirected to another server. If an instance moved without its secrets volume, its keys are new and its address cannot be changed: remove the registration and request it again with a new invitation code. Move the secrets volume of the Media service together with the instance to keep the registrations.
+
 ## Rules
 
 Rules decide which records are synchronized. They are managed in the admin app under **Sync → Rules** and apply to all partners, unless they are restricted to selected instances. A rule for all partners also applies to partners linked later. The partner details show the rules which apply to the partner.
@@ -54,7 +63,7 @@ When an instance is removed, rules restricted to this instance only are deleted,
 ## Synchronization
 
 - Rules apply only to records uploaded after the rule was created. Existing records are not synchronized automatically.
-- Admins can synchronize selected records or folders manually with **Synchronize** in the records overview or in the record details. Records already sent to a partner, records received from a partner and records matching no outgoing rule are skipped.
+- Admins can synchronize selected records or folders manually with **Synchronize** in the records overview or in the record details. With several linked partners, a dialog asks for all instances (default) or selected ones. Records already sent to a partner, records received from a partner and records matching no outgoing rule are skipped.
 - Every record is sent only once to each partner.
 - Records with the same file as an existing record are skipped by the partner and logged in the [audit log](#audit-log).
 - Changes of the metadata by the owner are synchronized to all partners which received the record.
@@ -64,6 +73,22 @@ When an instance is removed, rules restricted to this instance only are deleted,
 - A partner can delete a received record locally. The owner is not informed and does not send the record again.
 
 Transfers run in the background. Failed transfers are retried with growing delays of up to 6 hours and given up after 30 attempts. Large records are sent in parts of 32 MB (`Federation:ChunkSizeMb`), so an interrupted transfer continues where it stopped. The partner verifies the size, the SHA-256 hash and the MP3 format before it adds the record.
+
+### Progress
+
+The progress of a transfer is updated after every part, so it advances in steps of 32 MB:
+
+- In the records overview, records waiting to be sent or being sent show a progress ring on the cover and can be found with the synchronization filter **Sending**.
+- The record details list the open transfers per partner with their progress or the time of the next attempt.
+- In the [audit log](#audit-log), pending transfers show a progress bar with the percentage, on the sending and on the receiving instance. A received record appears in the records overview of the partner only after the transfer is complete.
+
+### Revoke the synchronization
+
+The owner can remove own records from partners without deleting them with **Revoke synchronization** in the records overview (records and folders) or in the record details. A dialog asks for all instances or selected ones; the record details offer only the instances the record was sent to.
+
+- The records are deleted on the selected partners, locked ones too, and stay on this instance. Waiting transfers to these partners are cancelled.
+- Revoked records are not sent to these partners again, neither automatically nor when a folder is synchronized. They are sent again only when the admin synchronizes the records themselves, i.e. selects them in the records overview or uses **Synchronize** in the record details. This removes the revocation for the selected instances.
+- The record details list the instances the synchronization was revoked for.
 
 :::caution Upload limits
 The parts must be smaller than the upload limit (`FILE_UPLOAD_LIMIT`) of the receiving instance. A record larger than `Federation:MaxRecordSizeMb` (2048 MB by default) of the partner is rejected.
@@ -85,7 +110,8 @@ Every registration step, transfer, update, deletion and key change is written to
 - Date, result, direction, action and instance can be sorted. A click on a column header switches between ascending, descending and not sorted. Several columns can be sorted at once; their priority follows the order in which they were sorted and is shown next to the arrow. Without sorting, the newest entries are shown first.
 - The filter field above the table searches the messages. Date, result, direction, action and instance have a filter in their header: the date opens a period dialog, the other columns a multi-selection dialog. Active filters are highlighted, can be removed per column or reset at once.
 - Entries can be selected across pages and filters and deleted with **Delete selected** after a confirmation with the count of entries.
-- Sending, updating or deleting a record at a partner is shown as _Pending_ as soon as it is scheduled. The same entry changes to _Success_, _Skipped_ or _Failed_; a failed attempt, which is retried, shows the error and the time of the next attempt and changes to _Success_ when a later attempt succeeds.
+- Sending, updating, deleting or revoking a record at a partner is shown as _Pending_ as soon as it is scheduled, receiving a record as soon as the partner starts the transfer. The same entry changes to _Success_, _Skipped_ or _Failed_; a failed attempt, which is retried, shows the error and the time of the next attempt and changes to _Success_ when a later attempt succeeds. A received transfer, which the partner does not continue within 7 days, changes to _Failed_.
+- Pending transfers show their progress next to the result. Progress and results of shown entries are updated in place.
 - New entries are announced above the table and loaded on demand.
 - A red dot at **Sync** in the navigation notifies the admin about registration requests, changes made by a partner, for example received, updated, deleted or removed records, and failed actions. Key changes are only logged.
 

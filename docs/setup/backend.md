@@ -600,7 +600,7 @@ cat ~/medialib/identity/appsettings.json
 
 | Setting | Description |
 | --- | --- |
-| `PublicUrl` | Public HTTPS address partners reach this instance at. Empty uses `OpenId:Issuer`. |
+| `PublicUrl` | Public HTTPS address partners reach this instance at. Empty uses `OpenId:Issuer`. When the address changes, linked partners are informed after the next start, see [address changes](../concepts/federation#address-changes). |
 | `AllowPrivateNetworks` | Allows partners with addresses in private networks, e.g. in a local network. Disabled by default. |
 | `KeysPath` | Folder of the signing keys. Must be inside the secrets volume `MEDIA_SECRETS_PATH` configured below. |
 | `KeyRotationDays`, `KeyPublishLeadDays`, `KeyRetireDays` | Rotation of the signing keys: a new key every 90 days, published 7 days before use, the old key is removed 14 days later. |
