@@ -19,3 +19,23 @@ On first start a private/public key will be generated to sign your requests to t
 Enter Your name and register your device by scanning the qr code in the admin app.
 
 You are ready to go.
+
+## Announcements
+
+After the start the app shows the active [announcements](../concepts/announcements) of the admins. This can be turned off in the settings section **Announcements** with **Show announcements on start**; the announcements can still be read there with **Show current announcements**.
+
+## Android Auto
+
+The Android app supports Android Auto. Records, favorites, livestreams and the discover categories can be browsed and played on the car display. If the device is not registered, the server cannot be reached or an error occurs, Android Auto shows the error message instead of the list.
+
+Android Auto is declared in `android/app/src/main/AndroidManifest.xml` with the meta-data `com.google.android.gms.car.application`, which references `res/xml/automotive_app_desc.xml`. To publish the app in Google Play, enable the form factor **Android Auto** in the Play Console under *Test and release > Advanced settings > Form factors* and accept its terms. The app does not support **Android Automotive OS**, which requires a separate build and track.
+
+To test without a car, use the [Desktop Head Unit](https://developer.android.com/training/cars/testing/dhu).
+
+## Licenses
+
+The licenses of all used packages are listed in the settings under **Licenses**. The list `lib/oss_licenses.dart` is generated with [dart_pubspec_licenses](https://pub.dev/packages/dart_pubspec_licenses) and must be generated again after dependencies changed:
+
+```bash
+dart run dart_pubspec_licenses:generate
+```
