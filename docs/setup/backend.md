@@ -578,6 +578,18 @@ cat ~/medialib/identity/appsettings.json
   }
 ```
 
+#### Records
+
+```json
+"Records": {
+    "MaxCoverSizeMb": 8
+  },
+```
+
+| Setting | Description |
+| --- | --- |
+| `MaxCoverSizeMb` | Largest cover an admin can set in the record details, 8 MB by default. Larger images are rejected. Covers from the id3 tags of uploaded records and from partners are not limited. The cover is sent base64 encoded, so the request is about a third larger than the image and must stay below the `FILE_UPLOAD_LIMIT` of the reverse proxy. |
+
 #### Federation
 
 [Federation](../concepts/federation) synchronizes records with other My Media Lib instances. It is always enabled. Partners reach this instance at the issuer address configured in `OpenId:Issuer`. Set `PublicUrl` only if partners use another public HTTPS address, with the [ssl port](#configure-reverse-proxy) if it is not 443.
@@ -658,6 +670,18 @@ You can now start all services.
 ```bash
 docker compose up -d 
 ```
+
+### Third-party licenses
+
+The images of the Identity and Media services contain the licenses of all used NuGet packages in `/app/licenses`: `THIRD-PARTY-NOTICES.md` lists the packages and `texts/` contains the license texts. They are generated with [nuget-license](https://github.com/sensslen/nuget-license) when the image is built and are not served by any endpoint. Licenses of system packages of the image, e.g. ffmpeg in the Media image, are stored in `/usr/share/doc`.
+
+```bash
+docker exec -it wekode.mml.media ls /app/licenses
+```
+
+### Automatic cleanup
+
+The Media service removes cover files no longer used by any [record](../concepts/records) on startup and then once a day, and deletes expired [announcements](../concepts/announcements) every hour.
 
 ## Create first admin client and user
 

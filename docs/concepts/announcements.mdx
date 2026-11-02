@@ -1,0 +1,39 @@
+---
+sidebar_position: 7
+---
+
+# Announcements
+
+Announcements are short messages of the [admins](./admins) for the users of the mobile app, for example an upcoming maintenance or another important notice. They are managed in the admin app in the tab **Announcements**.
+
+## Create and edit announcements
+
+An announcement has a title, a plain text message and a type:
+
+- **Information** for general notices.
+- **Maintenance** for planned downtimes.
+- **Important** for urgent messages.
+
+The type defines the symbol in the app and the order: important announcements are shown first, then maintenance, then information. Announcements of the same type are ordered by their start.
+
+By default an announcement is valid until an admin deletes it. With **Limit period** it is only shown between **Valid from** and **Valid to**. The Media service deletes announcements automatically about an hour after their period ended.
+
+Announcements can be edited and deleted at any time. Several announcements can be active at the same time.
+
+## Recipients
+
+Without selected [groups](./groups) and devices an announcement is shown to all [clients](./clients). Otherwise it is shown to the clients of the selected groups and to the selected devices.
+
+When a group is deleted, announcements which were only shown to this group are deleted as well, so they are not shown to all clients afterwards.
+
+## Announcements in the app
+
+When the app is opened, it shows the active announcements in one dialog. The symbol and its color show the type: the primary color of the app for information, orange for maintenance and the error color for important announcements. With **Next** and **Back** the users page through the announcements; long messages can be scrolled. The dialog can only be closed with **Close** on the last announcement.
+
+Announcements marked with **Do not show again** are not shown on start anymore until an admin changes them. All other announcements are shown again on the next start.
+
+In the settings section **Announcements** the users can turn off **Show announcements on start** and read all active announcements, including the hidden ones, with **Show current announcements**.
+
+:::info Older servers
+The apps keep working with servers without announcements. The mobile app shows no announcements and the admin app shows a hint in the tab **Announcements**.
+:::

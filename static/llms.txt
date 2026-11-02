@@ -23,6 +23,7 @@
 - [Records](https://we-kode.github.io/mml.project/concepts/records): Audio records managed by the Media service.
 - [Offline playlists](https://we-kode.github.io/mml.project/concepts/offline_playlists): Downloaded media and offline playback.
 - [Federation](https://we-kode.github.io/mml.project/concepts/federation): Synchronization of records between partner instances.
+- [Announcements](https://we-kode.github.io/mml.project/concepts/announcements): Messages of the admins shown in the mobile app.
 
 ## Customization
 
