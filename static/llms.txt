@@ -24,6 +24,7 @@
 - [Offline playlists](https://we-kode.github.io/mml.project/concepts/offline_playlists): Downloaded media and offline playback.
 - [Federation](https://we-kode.github.io/mml.project/concepts/federation): Synchronization of records between partner instances.
 - [Announcements](https://we-kode.github.io/mml.project/concepts/announcements): Messages of the admins shown in the mobile app.
+- [Sharing](https://we-kode.github.io/mml.project/concepts/sharing): Links to searches and playbacks, download links and continuing the last playback.
 
 ## Customization
 
