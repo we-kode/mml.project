@@ -1,0 +1,70 @@
+---
+sidebar_position: 8
+---
+
+# Sharing
+
+My Media Lib offers three ways to share content and a setting to continue the last playback.
+
+## Links to searches and playbacks
+
+In the mobile app the link icon in the app bar of the list of records shares a link to the current search with all filters. The icon is only shown, while a search text or a filter is set. The link icon in the player shares the playing record at its current position.
+
+The link points to the server and shows a page which opens the app. This page and the download page use the title and the colors of the app, see [Share](../setup/backend#style-the-share-pages). Whoever opens the link needs the app installed and [registered](./clients) on the same server. The app then shows the list with the same search or plays the record at the same position. Links of other servers are rejected. A search with more than 1000 filter values can not be shared, the app tells the user then.
+
+A link to a search is short: it contains only a token. The server stores the filters of the search under this token, equal searches get the same token. A token which was not opened for 30 days is deleted, the link does not work anymore then. Admins change this time in the admin app under **Settings → Share links → Search links**. A link to a record contains the record and the position directly. The link contains no media data. The app loads everything with the permissions of the user who opened the link: records of [groups](./groups) the user does not belong to are neither listed nor played, even if the link names them.
+
+## Download links
+
+Download links let anybody download records in a browser, without the app and without a login. Admins create them in the admin app, users in the mobile app, if they are allowed to.
+
+1. Select records or folders in the list of records.
+2. Press the share icon in the app bar. In the admin app it is shown for every selection, in the mobile app only if the user may share the selection.
+3. Share the created link, for example with a messenger or e-mail.
+
+Whoever opens the link sees a page with the download button. The page is the same for all links and shows only the number of records, whether the link can be used only once and until when it is valid. A single record is downloaded as audio file, several records as ZIP archive named `Records_<date>.zip`. All files are named by the titles of the records. Titles longer than file systems allow are shortened.
+
+A link contains at most 200 records. Admins change this limit with `Share:MaxRecordsPerLink` in the [appsettings of the Media service](../setup/backend#share). A folder counts with all its records, so select smaller folders or fewer records and create several links for more. Admin app and mobile app tell when a selection is too large.
+
+:::info Single-use links
+Opening a link page does not use up a single-use link, so previews of messengers do not invalidate it. The link is used when the download is started. If the download is interrupted, for example because the connection is lost, a single-use link can not be used again and a new link must be created.
+:::
+
+### Validity and single use
+
+Every link expires after the chosen validity of 1 hour, 1 day, 7 days, 30 days or 90 days at the latest. A single-use link expires with its first download. Expired and used links are deleted automatically.
+
+### Manage your links
+
+Admins and users manage the links they created themselves, nobody sees the links of others. In the admin app open **Settings → My active links**, in the mobile app **Settings → My active links** (shown to users who may share). The list shows the number of records, whether the link is a single-use link, the creation date and the expiry date of every active link.
+
+If users lose the right to share a record of a link, the link is revoked. This happens a moment after a rule is changed or deleted, because the links are checked in the background, when a group is deleted and when the groups of a client change. Only the links containing a record the user may not share anymore are revoked, the other links stay valid. Changes of records, for example of their genre, are checked when the link is opened. Links of admins are never revoked this way. If the rights of a client can not be loaded from the Identity service, its links are kept. The mobile app loads the rights to share when the settings are opened and when the first record of a selection is selected. Deleting a link makes it invalid immediately. Everybody who already received the link can no longer download anything. The link itself is not stored on the server, only a hash of it, so it can not be shown again. Create a new link if you lost it. Used and expired links disappear from the list.
+
+### Link settings of admins
+
+In the admin app under **Settings → Share links** admins choose validity and single use for their links. With **Use as default and do not ask again** these values are used without a dialog. Otherwise a dialog asks for the values every time an admin shares.
+
+### Link settings of users
+
+Under **Settings → Share links → Clients** admins decide how the links of users are created:
+
+- **Clients choose the link settings themselves** is off by default. The settings of the admin app for clients apply then (single-use link, 90 days by default) and the users get no options.
+- If it is on, users choose validity and single use in the mobile app, in the same way as admins. The settings page of the app is available without connection to the server and shows the section only to users who may share.
+
+### Who may share
+
+Admins may share all records. Users may only share records of their groups, which match a share rule of one of their groups. Admins manage the rules in the admin app on the page **Share**.
+
+A rule belongs to one or more groups and consists of genres, albums and artists, or it allows to share all records with the switch **Share all records**. The list of rules works like the list of announcements: the groups of a rule are shown as tags that can be changed directly, and a search finds rules by the names of their groups, genres, albums and artists. A rule without a group allows nobody to share. Within one criterion one match is enough (OR), all criteria of a rule must match (AND). An empty criterion matches everything, but every rule needs at least one genre, album or artist, unless it shares all records. A rule for all records allows the users of its groups to share every record of their groups. A record can be shared if any rule of any group of the user matches. Records received from [partners](./federation) are shared like own records: they need a group of the user and a matching rule, admins can always share them. Without a rule users can not share and do not see the share icon.
+
+If the user selects several records and may only share some of them, the app notifies the user and only the allowed records are shared.
+
+If the last record of a genre, album or artist is deleted, it is removed from the rules. A rule which loses its last criterion this way is deleted, so it does not allow sharing everything. Rules for all records are kept. If a group is deleted, the rules which belong to this group only are deleted too.
+
+:::info Reverse proxy
+Download and landing pages are served at `/s/` by the Media service. The [reverse proxy](../setup/backend#configure-reverse-proxy) must forward this path. The tokens of the links are part of the url, so the template does not write access logs for this path. Existing installations copy the current `default.conf.template` once, see the [upgrade guide](../setup/upgrade#use-sharing).
+:::
+
+## Continue the last playback
+
+In the settings of the mobile app **Continue playback** is off by default. If it is on, the app remembers the record and the position on the device. When the app is opened, the record is prepared at the position where the user stopped and waits for the play button. The position is stored every few seconds and when the app is paused or closed. This works for records of the server and for downloaded records of offline playlists. Records played to the end and livestreams are not remembered. A record which was removed, which the user may not play anymore or whose download was deleted is forgotten without a message. Without connection to the server the record is kept and prepared at the next start. A link opened at the start has priority over the stored position.

@@ -335,6 +335,8 @@ sudo docker compose up wekode.mml.mbus -d
 
 [Nginx](https://www.nginx.com/) is used as reverse proxy and api gateway. This is the entrypoint to the backend from extern requests of the admin and mobile app.
 
+Besides the api it forwards the public pages under `/s/` of the Media service, which open [shared links](../concepts/sharing) in the browser. Responses of downloads are not buffered, so large ZIP archives are streamed.
+
 ### Create folder
 Create the folder where the configuration will be.
 
@@ -590,6 +592,20 @@ cat ~/medialib/identity/appsettings.json
 | --- | --- |
 | `MaxCoverSizeMb` | Largest cover an admin can set in the record details, 8 MB by default. Larger images are rejected. Covers from the id3 tags of uploaded records and from partners are not limited. The cover is sent base64 encoded, so the request is about a third larger than the image and must stay below the `FILE_UPLOAD_LIMIT` of the reverse proxy. |
 
+#### Share
+
+```json
+"Share": {
+    "MaxRecordsPerLink": 200,
+    "StylingPath": "/configs/styling.json"
+  },
+```
+
+| Setting | Description |
+| --- | --- |
+| `MaxRecordsPerLink` | Largest number of records in one [download link](../concepts/sharing), 200 by default, at most 10000. The apps show the limit when a selection is too large. |
+| `StylingPath` | Path of the [styling of the share pages](#style-the-share-pages) inside the container. Keep the default and mount another file with `MEDIA_STYLING` instead. |
+
 #### Federation
 
 [Federation](../concepts/federation) synchronizes records with other My Media Lib instances. It is always enabled. Partners reach this instance at the issuer address configured in `OpenId:Issuer`. Set `PublicUrl` only if partners use another public HTTPS address, with the [ssl port](#configure-reverse-proxy) if it is not 443.
@@ -625,6 +641,54 @@ cat ~/medialib/identity/appsettings.json
 Partners are identified by the `INSTANCE` name in the `.env` file. Every instance needs a unique name consisting of letters, digits, `.`, `_` or `-` with up to 64 characters. Do not change the name after the first start, the Media service refuses to start with another name, see [Instance name](#instance-name).
 :::
 
+### Style the share pages
+
+The public pages of [share links](../concepts/sharing) show the title and use the colors of your mobile app, so they look like the app. They are configured in the file `styling.json`, which is filled with the title and the colors of the unchanged app. You only need it, if you [customized the app](../customize/android) or want other values.
+
+Copy [`styling.json`](https://github.com/we-kode/mml.deployment/blob/develop/media/styling.json) to `~/medialib/media/styling.json` on the server and adjust the values. The file is read when the service starts.
+
+```json
+{
+  "title": {
+    "default": "Meine Mediathek",
+    "de": "Meine Mediathek",
+    "en": "My Media Lib",
+    "ru": "Моя Медиятека"
+  },
+  "colors": {
+    "light": {
+      "surface": "#FDFBFF",
+      "onSurface": "#1A1C1E",
+      "surfaceContainerHighest": "#E0E2EC",
+      "onSurfaceVariant": "#43474E",
+      "primary": "#245FA6",
+      "onPrimary": "#FFFFFF",
+      "primaryContainer": "#D5E3FF",
+      "onPrimaryContainer": "#001B3C",
+      "outline": "#74777F"
+    },
+    "dark": {
+      "surface": "#1A1C1E",
+      "onSurface": "#E3E2E6",
+      "surfaceContainerHighest": "#43474E",
+      "onSurfaceVariant": "#C4C6CF",
+      "primary": "#A8C8FF",
+      "onPrimary": "#003061",
+      "primaryContainer": "#004689",
+      "onPrimaryContainer": "#D5E3FF",
+      "outline": "#8E9199"
+    }
+  }
+}
+```
+
+| Setting | Description |
+| --- | --- |
+| `title` | Title of the app per language, as set in the `app.cfg` of your app. `default` is used for all languages which are not listed. |
+| `colors` | Colors of the light and dark theme as hex values like `#245FA6`. The names are the names of the color roles in the `lib_color_schemes.g.dart` of your app, so you can copy the values from there. Invalid or missing values use the default. |
+
+Set `MEDIA_STYLING` in the `.env` file to the path of the file and restart the service, see below. Without the setting or with a missing or invalid file the defaults are used.
+
 ### Update .env file and start service
 Update the required values in the `~/medialib/.env` file.
 
@@ -645,6 +709,8 @@ MEDIA_APPSETTINGS=/home/mml/medialib/media/appsettings.json
 VOL_RECORDS=/home/mml/medialib/media/records
 ## The path where the federation keys of the media service are stored.
 MEDIA_SECRETS_PATH=/home/mml/medialib/media/secrets
+## Optional. Path and name on host machine where the styling of the share pages is stored.
+#MEDIA_STYLING=/home/mml/medialib/media/styling.json
 ## Optional. Secret to encrypt the federation keys stored in MEDIA_SECRETS_PATH.
 #FEDERATION_KEY_SECRET=
 ```

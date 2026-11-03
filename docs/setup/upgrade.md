@@ -154,3 +154,11 @@ Federation is enabled after the update without further configuration. Nobody can
 
 1. Make sure `FILE_UPLOAD_LIMIT` in the `.env` file is larger than `ChunkSizeMb` of your partners (32 MB by default).
 2. Register partners as described in [Federation](../concepts/federation#registration).
+
+## Use sharing
+
+[Sharing](../concepts/sharing) needs the route `/s/` in the reverse proxy. Copy the current [`default.conf.template`](https://github.com/we-kode/mml.deployment/blob/develop/reverse-proxy/default.conf.template) to the server and restart the reverse proxy. Without it, links to searches and downloads do not work. Afterwards:
+
+1. Update the Media service and the admin and mobile apps. The Media service migrates its database on start.
+2. Create [share rules](../concepts/sharing#who-may-share) for the groups whose users should be allowed to share. Without rules users can not share.
+3. Optional: adjust the look of the share pages in [`styling.json`](./backend#style-the-share-pages), e.g. if you customized your app. The compose file of the deployment mounts the file from `MEDIA_STYLING`. Without the file the pages look like the unchanged app.
