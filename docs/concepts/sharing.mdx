@@ -10,7 +10,7 @@ My Media Lib offers three ways to share content and a setting to continue the la
 
 In the mobile app the link icon in the app bar of the list of records shares a link to the current search with all filters. The icon is only shown, while a search text or a filter is set. The link icon in the player shares the playing record at its current position.
 
-The link points to the server and shows a page which opens the app. This page and the download page use the title and the colors of the app, see [Share](../setup/backend#style-the-share-pages). Whoever opens the link needs the app installed and [registered](./clients) on the same server. The app then shows the list with the same search or plays the record at the same position. Links of other servers are rejected. A search with more than 1000 filter values can not be shared, the app tells the user then.
+The link points to the server and shows a page which opens the app. This page and the download page use the title and the colors of the app, see [Share](../setup/backend/media#style-the-share-pages). Whoever opens the link needs the app installed and [registered](./clients) on the same server. The app then shows the list with the same search or plays the record at the same position. Links of other servers are rejected. A search with more than 1000 filter values can not be shared, the app tells the user then.
 
 A link to a search is short: it contains only a token. The server stores the filters of the search under this token, equal searches get the same token. A token which was not opened for 30 days is deleted, the link does not work anymore then. Admins change this time in the admin app under **Settings → Share links → Search links**. A link to a record contains the record and the position directly. The link contains no media data. The app loads everything with the permissions of the user who opened the link: records of [groups](./groups) the user does not belong to are neither listed nor played, even if the link names them.
 
@@ -24,7 +24,7 @@ Download links let anybody download records in a browser, without the app and wi
 
 Whoever opens the link sees a page with the download button. The page is the same for all links and shows only the number of records, whether the link can be used only once and until when it is valid. A single record is downloaded as audio file, several records as ZIP archive named `Records_<date>.zip`. All files are named by the titles of the records. Titles longer than file systems allow are shortened.
 
-A link contains at most 200 records. Admins change this limit with `Share:MaxRecordsPerLink` in the [appsettings of the Media service](../setup/backend#share). A folder counts with all its records, so select smaller folders or fewer records and create several links for more. Admin app and mobile app tell when a selection is too large.
+A link contains at most 200 records. Admins change this limit with `Share:MaxRecordsPerLink` in the [appsettings of the Media service](../setup/backend/media#share). A folder counts with all its records, so select smaller folders or fewer records and create several links for more. Admin app and mobile app tell when a selection is too large.
 
 :::info Single-use links
 Opening a link page does not use up a single-use link, so previews of messengers do not invalidate it. The link is used when the download is started. If the download is interrupted, for example because the connection is lost, a single-use link can not be used again and a new link must be created.
@@ -62,7 +62,7 @@ If the user selects several records and may only share some of them, the app not
 If the last record of a genre, album or artist is deleted, it is removed from the rules. A rule which loses its last criterion this way is deleted, so it does not allow sharing everything. Rules for all records are kept. If a group is deleted, the rules which belong to this group only are deleted too.
 
 :::info Reverse proxy
-Download and landing pages are served at `/media/s/` by the Media service. The [reverse proxy](../setup/backend#configure-reverse-proxy) must forward this path. The tokens of the links are part of the url, so the template does not write access logs for this path. Existing installations copy the current `default.conf.template` once, see the [upgrade guide](../changelogs/4.0.0#8-use-sharing).
+Download and landing pages are served at `/media/s/` by the Media service. The [reverse proxy](../setup/backend/reverse-proxy) must forward this path. The tokens of the links are part of the url, so the template does not write access logs for this path. Existing installations copy the current `default.conf.template` once, see the [upgrade guide](../changelogs/4.0.0#8-use-sharing).
 :::
 
 :::info Older servers

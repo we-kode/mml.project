@@ -10,7 +10,16 @@
 
 ## Setup
 
-- [Backend setup](https://we-kode.github.io/mml.project/setup/backend): Configure and run the backend services and infrastructure.
+- [Backend setup](https://we-kode.github.io/mml.project/setup/backend): Overview and order of the backend setup steps.
+- [Backend step 1: Prepare the server](https://we-kode.github.io/mml.project/setup/backend/prepare-server): Deployment files, instance name, mml user and Docker.
+- [Backend step 2: Certificates and keys](https://we-kode.github.io/mml.project/setup/backend/certificates-and-keys): TLS variants, certificates, secrets and app keys.
+- [Backend step 3: Database](https://we-kode.github.io/mml.project/setup/backend/database): PostgreSQL and the databases of Identity and Media.
+- [Backend step 4: Cache and message bus](https://we-kode.github.io/mml.project/setup/backend/cache-and-message-bus): Redis and RabbitMQ.
+- [Backend step 5: Reverse proxy](https://we-kode.github.io/mml.project/setup/backend/reverse-proxy): Nginx configuration and logs.
+- [Backend step 6: Identity](https://we-kode.github.io/mml.project/setup/backend/identity): Configuration of the Identity service.
+- [Backend step 7: Media](https://we-kode.github.io/mml.project/setup/backend/media): Configuration of the Media service, records, sharing and federation.
+- [Backend step 8: Start and first admin](https://we-kode.github.io/mml.project/setup/backend/start-and-first-admin): Start the backend and create the first admin.
+- [Backend operations](https://we-kode.github.io/mml.project/setup/backend/operations): External TLS proxy, moving to another domain, PostgreSQL upgrade and CSV export.
 - [Mobile app setup](https://we-kode.github.io/mml.project/setup/app): Build and customize the mobile client.
 - [Administration app setup](https://we-kode.github.io/mml.project/setup/administration-app): Build and customize the desktop administration client.
 
@@ -31,9 +40,10 @@
 
 ## Customization
 
-- [Administration app customization](https://we-kode.github.io/mml.project/customize/administration-app): Customize the desktop app.
-- [Android customization](https://we-kode.github.io/mml.project/customize/android): Customize Android assets and configuration.
-- [iOS customization](https://we-kode.github.io/mml.project/customize/ios): Customize iOS assets and configuration.
+- [Fork and release](https://we-kode.github.io/mml.project/customize/fork-and-release): Fork setup, customization, GitHub secrets, sync workflow and renewal of signing material.
+- [Administration app customization](https://we-kode.github.io/mml.project/customize/administration-app): Signing and release pipeline for Linux, Windows and macOS.
+- [Android customization](https://we-kode.github.io/mml.project/customize/android): Upload keystore and release pipeline for Google Play.
+- [iOS customization](https://we-kode.github.io/mml.project/customize/ios): Apple certificate, provisioning profile and release pipeline for the App Store.
 
 ## Contribution
 
