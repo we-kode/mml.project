@@ -65,6 +65,10 @@ If the last record of a genre, album or artist is deleted, it is removed from th
 Download and landing pages are served at `/media/s/` by the Media service. The [reverse proxy](../setup/backend#configure-reverse-proxy) must forward this path. The tokens of the links are part of the url, so the template does not write access logs for this path. Existing installations copy the current `default.conf.template` once, see the [upgrade guide](../changelogs/4.0.0#8-use-sharing).
 :::
 
+:::info Older servers
+The apps hide sharing on servers without this feature. The admin app shows a hint on the page of the share rules. Update the Media service and the reverse proxy to use sharing, see [Use sharing](../setup/upgrade#use-sharing).
+:::
+
 ## Continue the last playback
 
 In the settings of the mobile app **Continue playback** is off by default. If it is on, the app remembers the record and the position on the device. When the app is opened, the record is prepared at the position where the user stopped and waits for the play button. The position is stored every few seconds and when the app is paused or closed. This works for records of the server and for downloaded records of offline playlists. Records played to the end and livestreams are not remembered. A record which was removed, which the user may not play anymore or whose download was deleted is forgotten without a message. Without connection to the server the record is kept and prepared at the next start. A link opened at the start has priority over the stored position.
