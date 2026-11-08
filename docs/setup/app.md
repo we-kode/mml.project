@@ -20,6 +20,12 @@ Enter Your name and register your device by scanning the qr code in the admin ap
 
 You are ready to go.
 
+## Server address
+
+The app stores the domain of the server, at which it was registered. If the server [moves to another domain](./backend#move-to-another-domain), the app learns the new domain on its next start, checks in the background that it is registered there and then uses the new domain. If the check fails, the app keeps the old domain and tries again on the next start. The device never has to be registered again because of a move.
+
+If the old domain is already switched off, scan the connection settings QR code of the admin app in the settings of the app under **Update connection settings**.
+
 ## Announcements
 
 After the start the app shows the active [announcements](../concepts/announcements) of the admins. This can be turned off in the settings section **Announcements** with **Show announcements on start**; the announcements can still be read there with **Show current announcements**.

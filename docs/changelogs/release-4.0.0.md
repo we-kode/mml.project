@@ -31,6 +31,7 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 - TLS is optional. Without `TLS:Cert` the service listens on http and trusts the forwarded headers of the reverse proxy from private networks or the networks in `ForwardedHeaders:KnownNetworks`.
 - The secret of the federation keys can be read from a file in `FEDERATION_KEY_SECRET_FILE`.
 - The Docker image contains the third-party notices of all packages.
+- The optional setting `Connection:ServerName` announces a new domain to the apps and the admin app, so registered devices [move to another domain](../setup/backend#move-to-another-domain) without registering again.
 
 ### Bugfixes
 
@@ -77,6 +78,7 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 - Android Auto works.
 - The player uses the dark surface in dark mode, and the color scheme template is updated.
 - The Android Gradle plugin is raised to 8.9.1.
+- The app [moves to another domain](../setup/app#server-address) of the server in the background, after it checked that it is registered there.
 
 ### Bugfixes
 
@@ -102,6 +104,7 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 - Login and form dialogs can be submitted with Enter.
 - Covers load faster.
 - The color scheme is updated and animations use Lottie instead of Rive.
+- Registration and connection settings QR codes use the domain announced by the server in `Connection:ServerName`.
 
 ### Bugfixes
 
@@ -118,6 +121,7 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 ### New features
 
 - TLS can be terminated by the reverse proxy (`PROXY_TLS=true`, default) or by an [external proxy](../setup/backend#ssl-termination-at-an-external-proxy) (`PROXY_TLS=false`). Behind an external proxy the reverse proxy takes the client ip from `X-Forwarded-For` of the proxies in `TRUSTED_PROXY`.
+- `PROXY_TLS=both` accepts direct clients with TLS on `SSL_PORT` and an external proxy over http on `HTTP_PORT` at the same time, e.g. while [moving to another domain](../setup/backend#move-to-another-domain).
 - The reverse proxy forwards Identity routes to Identity and all other requests to Media, and passes `X-Forwarded-Proto` to the services.
 - The reverse proxy writes its [logs](../setup/backend#logs) to files in `PROXY_LOGS` instead of the console. Share links are not logged.
 - Secrets of Identity and Media are read from files, see [Encryption and Signing](../setup/backend#encryption-and-signing).
