@@ -89,9 +89,17 @@ You are responsible for the security of your infrastructure.
 
 ### SSL/TLS
 
-All services are running using ssl/tls encryption. We need a fullchain cert with it's private key and a pfx cert file to run the service.
+The apps always communicate with the backend over https. Where TLS is terminated depends on your infrastructure:
 
-Generate a ssl/tls certificate based on your needs for your custom domain and copy it to the certs folder.
+| Variant | Reverse proxy | Identity and Media | Certificates |
+| --- | --- | --- | --- |
+| TLS everywhere (default) | `PROXY_TLS=true` | `TLS` with pfx certificate | `.crt`, `.key` and `.pfx` |
+| TLS only at the reverse proxy | `PROXY_TLS=true` | no `TLS:Cert`, http in the docker network | `.crt` and `.key` |
+| TLS at an [external proxy](#ssl-termination-at-an-external-proxy) | `PROXY_TLS=false` | no `TLS:Cert`, http in the docker network | none, the external proxy owns the certificate |
+
+Identity and Media listen on http, if no `TLS:Cert` is configured in their appsettings. Then set `IDENTITY_API_ADDRESS` and `MEDIA_API_ADDRESS` in the `.env` file to `http://wekode.mml.identity` and `http://wekode.mml.media`. Never publish the ports of the services. PostgreSQL, Redis and RabbitMQ communicate unencrypted inside the docker network in all variants.
+
+For the variants with TLS, generate a ssl/tls certificate based on your needs for your custom domain and copy it to the certs folder. Without certificates `VOL_CERTS` can point to an empty folder.
 
 ```bash
 touch ~/medialib/certs
@@ -116,7 +124,16 @@ The [identity service](#configure-identity-service) signs and encrypts its token
 
 Keep this folder when updating the service. If the certificates are lost, new ones are created and all [admins](../concepts/admins) have to log in again.
 
-The certificates can be protected with a password by setting `SIGN_SECRET` and `ENCRYPT_SECRET` in the `.env` file. You can generate a random secret using `openssl rand -base64 32`. Certificates created without password are protected automatically when a secret is set later. Do not change a secret afterwards, otherwise the certificate cannot be read anymore.
+The certificates can be protected with a password. Store each secret in its own file and set the paths in `SIGN_SECRET_FILE` and `ENCRYPT_SECRET_FILE` of the `.env` file. The files are mounted read-only into the container, so the secrets are not part of the environment of the container. Certificates created without password are protected automatically when a secret is set later. Do not change a secret afterwards, otherwise the certificate cannot be read anymore.
+
+```bash
+openssl rand -base64 32 > identity/sign.secret
+openssl rand -base64 32 > identity/encrypt.secret
+sudo chown 1001:1001 identity/*.secret
+sudo chmod 600 identity/*.secret
+```
+
+The variables `SIGN_SECRET` and `ENCRYPT_SECRET` with the secret itself are still supported, if no file is configured. Move an existing secret into a file without changing it, e.g. `printf '%s' '<secret>' > identity/sign.secret`.
 
 ## Configure database service
 
@@ -335,35 +352,48 @@ sudo docker compose up wekode.mml.mbus -d
 
 [Nginx](https://www.nginx.com/) is used as reverse proxy and api gateway. This is the entrypoint to the backend from extern requests of the admin and mobile app.
 
-Besides the api it forwards the public pages under `/s/` of the Media service, which open [shared links](../concepts/sharing) in the browser. Responses of downloads are not buffered, so large ZIP archives are streamed.
+It forwards the openid configuration, the api and the hub `/hub/client` of the Identity service to Identity and all other requests to the Media service. These include the public pages under `/media/s/`, which open [shared links](../concepts/sharing) in the browser. Responses of the Media service are not buffered, so large ZIP archives are streamed.
 
 ### Create folder
 Create the folder where the configuration will be.
 
 ```bash
-mkdir proxy
+mkdir -p proxy/logs
 ```
 
 ### Configuration
 
-Copy [`default.conf.template`](https://github.com/we-kode/mml.deployment/blob/develop/reverse-proxy/default.conf.template) to `~/medialib/proxy\default.conf.template` on the server.
+Copy [`default.conf.template`](https://github.com/we-kode/mml.deployment/blob/develop/reverse-proxy/default.conf.template) and [`15-mml-listen.sh`](https://github.com/we-kode/mml.deployment/blob/develop/reverse-proxy/15-mml-listen.sh) to `~/medialib/proxy` on the server and make the script executable. The script generates the listen configuration depending on `PROXY_TLS` when the proxy starts.
+
+```bash
+chmod +x proxy/15-mml-listen.sh
+```
 
 ### Update .env file and start service
 
 Update the required values in the `~/medialib/.env` file.
 
-```bash {7,11}
+```bash {13,17}
 cat .env
 
 ## proxy configuration section
 ## The docker tag to be used.
 # NGINX_VERSION=latest
-## The ssl port on the host machine for requests to the mml-app from extern. Recomended to be changed to another port.
+## true: the proxy terminates TLS with the certificate CERT_NAME.
+## false: the proxy listens on http behind an external proxy, which terminates TLS. Never expose it directly to the internet.
+# PROXY_TLS=true
+## Only used with PROXY_TLS=false. Space separated ips or CIDRs of the external proxies, which are trusted to send the client ip
+## in X-Forwarded-For. Replaces the default private networks "10.0.0.0/8 172.16.0.0/12 192.168.0.0/16". e.g. 192.168.10.5/32
+# TRUSTED_PROXY=
+## The port on the host machine for requests to the mml-app from extern (https, or http when PROXY_TLS=false). Recomended to be changed to another port.
 SSL_PORT=5555
 ## The port the reverse proxy is listen on in the docker file.
 #INTERN_SSL_PORT=5050
-## Path to the folder where the default.conf.template file is stored on host.
+## Path to the folder where the default.conf.template and the executable 15-mml-listen.sh files are stored on host.
 CONF_TEMPLATE=/home/media/medialib/proxy
+## Optional. Path to the folder on host where the access.log and error.log of the proxy are written. Must be writable by the proxy.
+## Share links are not logged. Rotate the logs on the host, e.g. with logrotate.
+PROXY_LOGS=/home/media/medialib/proxy/logs
 ## Upload file limit to prevent huge files to be uplaoded to server.
 ## Must be larger than Federation:ChunkSizeMb of every partner instance (default 32 MB), which sends records to this instance.
 #FILE_UPLOAD_LIMIT=100m
@@ -376,6 +406,42 @@ Set user rights of the folder to the [docker user](#create-mml-user) and start t
 sudo chown -R 1001:1001 proxy/
 sudo docker compose up wekode.mml.reverseproxy -d
 ```
+
+### Logs
+
+The reverse proxy writes its logs to `access.log` and `error.log` in `PROXY_LOGS` instead of the console. Requests of [shared links](../concepts/sharing) are not logged, because their tokens are part of the path. `docker logs wekode.mml.reverseproxy` only shows the start of the container and errors of the configuration.
+
+nginx does not rotate the files. Rotate them on the host, e.g. with logrotate in `/etc/logrotate.d/mml-proxy`:
+
+```bash
+/home/media/medialib/proxy/logs/*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    postrotate
+        docker exec wekode.mml.reverseproxy nginx -s reopen
+    endscript
+}
+```
+
+### SSL termination at an external proxy
+
+If several services share one domain or server, an external proxy like [Nginx Proxy Manager](https://nginxproxymanager.com/), Traefik or Caddy can terminate TLS and forward the requests over http to the reverse proxy of MML.
+
+1. Set `PROXY_TLS=false` in the `.env` file. `CERT_NAME` is not needed.
+2. Configure Identity and Media without `TLS:Cert` and set `IDENTITY_API_ADDRESS=http://wekode.mml.identity` and `MEDIA_API_ADDRESS=http://wekode.mml.media`.
+3. Keep `OpenId:Issuer` of both services at the public https url of the external proxy, e.g. `https://mml.example.com/`.
+4. Forward the domain in the external proxy to `http://<host of mml>:<SSL_PORT>` and enable websockets, which are used by `/hub/client` and `/hub/federation`. In Nginx Proxy Manager enable **Websockets Support** of the proxy host.
+5. Raise the upload limit of the external proxy to at least `FILE_UPLOAD_LIMIT`, otherwise uploads and [federation](../concepts/federation) transfers fail.
+
+The external proxy has to send the headers `X-Forwarded-For` and `X-Forwarded-Proto`. Nginx Proxy Manager, Traefik and Caddy send them by default. The reverse proxy of MML takes the client ip from `X-Forwarded-For`, so the rate limit and the logs refer to the real client. It trusts this header only from the networks in `TRUSTED_PROXY`, by default all private networks. Set `TRUSTED_PROXY` to the ip of your external proxy, e.g. `TRUSTED_PROXY=192.168.10.5/32`, so no other device in your network can fake its ip. Add the address of your external proxy as well, if it reaches MML from a public or IPv6 address.
+
+:::caution Security
+With `PROXY_TLS=false` the reverse proxy trusts the `X-Forwarded-Proto` header. Allow only your external proxy to reach `SSL_PORT`, e.g. with a firewall rule.
+:::
 
 ## Generate App Keys
 
@@ -421,6 +487,14 @@ cat ~/medialib/identity/appsettings.json
   },
 ```
 
+Remove the `TLS` section or leave `Cert` empty to run the service on http, if TLS is terminated by the [reverse proxy or an external proxy](#ssltls). The service trusts the forwarded headers of the reverse proxy from private networks. To restrict them, set the networks of the reverse proxy in `ForwardedHeaders:KnownNetworks`, e.g. the subnet of the docker network `wekode.mml`.
+
+```json
+"ForwardedHeaders": {
+    "KnownNetworks": [ "172.18.0.0/16" ]
+  },
+```
+
 #### Set issuer url to your domain and port you are using as ssl port.
 
 ```json {7}
@@ -439,7 +513,7 @@ cat ~/medialib/identity/appsettings.json
 ```json
 "ConnectionStrings": {
     "IdentityConnection": "Server=wekode.mml.db;Port=5432;Database=identity;User Id=identity;Password=identity;",
-    "DistributedCache": "wekode.mml.cache:7379,password=<password>"
+    "DistributedCache": "wekode.mml.cache:6379,password=<password>"
   },
 ```
 
@@ -485,9 +559,9 @@ IDENTITY_VERSION=1.0.2
 ## Path and name on host machine where the appsettings is stored.
 ## for example /app/config/appsettings.json
 IDENTITY_APPSETTINGS=/home/mml/medialib/identity/appsettings.json
-## Optional. Secrets to protect the encryption and signing certificates.
-#ENCRYPT_SECRET=
-#SIGN_SECRET=
+## Optional. Paths to the files on host with the secrets to protect the encryption and signing certificates.
+#ENCRYPT_SECRET_FILE=/home/mml/medialib/identity/encrypt.secret
+#SIGN_SECRET_FILE=/home/mml/medialib/identity/sign.secret
 ## The path where the certificates of the identity are stored.
 IDENTITY_SECRETS_PATH=/home/mml/medialib/identity/secrets
 ```
@@ -537,6 +611,14 @@ cat ~/medialib/identity/appsettings.json
 "TLS": {
     "Cert": "/certs/<name of cert>.pfx",
     "Password": "<password>"
+  },
+```
+
+Remove the `TLS` section or leave `Cert` empty to run the service on http, if TLS is terminated by the [reverse proxy or an external proxy](#ssltls). The service trusts the forwarded headers of the reverse proxy from private networks. To restrict them, set the networks of the reverse proxy in `ForwardedHeaders:KnownNetworks`, e.g. the subnet of the docker network `wekode.mml`.
+
+```json
+"ForwardedHeaders": {
+    "KnownNetworks": [ "172.18.0.0/16" ]
   },
 ```
 
@@ -711,13 +793,13 @@ VOL_RECORDS=/home/mml/medialib/media/records
 MEDIA_SECRETS_PATH=/home/mml/medialib/media/secrets
 ## Optional. Path and name on host machine where the styling of the share pages is stored.
 #MEDIA_STYLING=/home/mml/medialib/media/styling.json
-## Optional. Secret to encrypt the federation keys stored in MEDIA_SECRETS_PATH.
-#FEDERATION_KEY_SECRET=
+## Optional. Path to the file on host with the secret to encrypt the federation keys stored in MEDIA_SECRETS_PATH.
+#FEDERATION_KEY_SECRET_FILE=/home/mml/medialib/media/federation.secret
 ```
 
 The signing keys of the [federation](../concepts/federation) are created automatically in `MEDIA_SECRETS_PATH`. Keep this folder when updating the service, otherwise partners have to load new keys. The folder must be writable by the [docker user](#create-mml-user); the service cannot create keys otherwise and federation requests fail.
 
-`FEDERATION_KEY_SECRET` encrypts the stored keys. You can generate a random secret using `openssl rand -base64 32`. Keys stored without encryption are encrypted automatically when the secret is set later. If the secret is changed or removed, existing encrypted keys cannot be read anymore and the service reports an error. In this case delete the files in `MEDIA_SECRETS_PATH`: new keys are created and partners load them automatically.
+The secret in the file `FEDERATION_KEY_SECRET_FILE` encrypts the stored keys. Create it like the [secrets of the identity service](#encryption-and-signing), e.g. `openssl rand -base64 32 > media/federation.secret`. `FEDERATION_KEY_SECRET` with the secret itself is still supported, if no file is configured. Keys stored without encryption are encrypted automatically when the secret is set later. If the secret is changed or removed, existing encrypted keys cannot be read anymore and the service reports an error. In this case delete the files in `MEDIA_SECRETS_PATH`: new keys are created and partners load them automatically.
 
 Set user rights of the folders to the [docker user](#create-mml-user) and start the service.
 

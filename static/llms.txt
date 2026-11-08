@@ -13,7 +13,10 @@
 - [Backend setup](https://we-kode.github.io/mml.project/setup/backend): Configure and run the backend services and infrastructure.
 - [Mobile app setup](https://we-kode.github.io/mml.project/setup/app): Build and customize the mobile client.
 - [Administration app setup](https://we-kode.github.io/mml.project/setup/administration-app): Build and customize the desktop administration client.
-- [Upgrade to the federation release](https://we-kode.github.io/mml.project/setup/upgrade): Configuration changes when updating an existing backend.
+
+## Changelogs
+
+- [Release 4.0.0](https://we-kode.github.io/mml.project/changelogs/4.0.0): New features, bugfixes and breaking changes of 4.0.0 and the upgrade from 3.x.
 
 ## Concepts
 
