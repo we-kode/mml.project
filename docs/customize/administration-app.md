@@ -4,112 +4,101 @@ sidebar_position: 2
 
 # Administration App
 
-You can customize the title, the logo and colors of your admin app.
+Build your customized administration app for Linux, Windows and macOS. Set up the fork, the configuration and the sync workflow first as described in [Fork and release](./fork-and-release.md).
 
-## Customize
+To build manually instead, follow the official guides for [Windows](https://docs.flutter.dev/deployment/windows), [Linux](https://docs.flutter.dev/deployment/linux) and [macOS](https://docs.flutter.dev/deployment/macos).
 
-### Manually
-You can customize the app manually. Please check the offical documentation on how to do this for [windows](https://docs.flutter.dev/deployment/windows), [linux](https://docs.flutter.dev/deployment/linux) or [macOS](https://docs.flutter.dev/deployment/macos). This guide will show an automated process with github actions. 
-### Automated
+## Linux
 
-:::info 
-The automated customization script runs on linux systems only.
-:::
+The Linux build is an unsigned `.zip` of the app bundle. No secrets are needed.
 
-The [mml.administration-app](https://github.com/we-kode/mml.administration-app) provides one `config` folder, where all configurations for the customization are included. Replace the configs with your custom needs.
+## Windows
 
-:::caution Filenames
-Please do not change the filenames in the config folder. Just replace them by your own files with the same filename.
-:::
+The workflow creates an `.msix` package with the [msix](https://pub.dev/packages/msix) package. Windows installs it only, if it is signed with a certificate the computer trusts.
 
-Icons you can [generate](https://www.appicon.co/) and replace the icons in the `icons` folder. You can [generate your custom color scheme](https://m3.material.io/theme-builder#/custom) and replace the color values in `lib_color_schemes.g.dart`.
-The title in different languages and the bundle or app id you can update in the app.cfg file.
+| Certificate | Trust | Cost |
+| --- | --- | --- |
+| Self-signed | Every admin imports your public `.cer` once | free |
+| Code signing certificate of a certificate authority | trusted by Windows | yearly fee |
 
-To update run the `./customize` script. This script will clone the [mml.administration-app](https://github.com/we-kode/mml.administration-app) and replace all items with the items in the configuration. Copy the `./mml.administration-app` folder to the os you like and [build the app from source](../setup/administration-app).
+### 1. Create a self-signed certificate
 
-## Github Action Workflow
+Run in PowerShell on Windows. The subject is the publisher of the package, e.g. `CN=Example, O=Example, C=DE`.
 
-All the steps above can be done with github actions. Fork the [mml.administration-app](https://github.com/we-kode/mml.administration-app) and [customize](#automated) the app on your needs. The github workflow consists two actions. Sync fork for listen to new releases and Flutter CI to build the app, when new release is available. You need some [github secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets). The `SYNC_PAT` is a Personal Access Token with the right to create releases.
-For more information check the [step by step guides](https://angeloavv.medium.com/how-to-distribute-flutter-desktop-app-binaries-using-github-actions-f8d0f9be4d6b) for [windows msix](https://pub.dev/packages/msix), linux and [macOS dmg](https://medium.com/flutter-community/build-sign-and-deliver-flutter-macos-desktop-applications-on-github-actions-5d9b69b0469c). 
-
-:::info 
-Replace all texts in <...Some text...> with your custom values. More comments are in code of actions.
-:::
-
-### Listen to release tags
-
-```yaml
-name: Sync fork with upstream
-
-on:
-  schedule:
-  - cron:  "0 0 1/7 * *"
-  workflow_dispatch:
-
-jobs:
-  repo-sync:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        token: ${{ secrets.SYNC_PAT }}
-        persist-credentials: false
-    - name: repo-sync
-      uses: repo-sync/github-sync@v2
-      with:
-        source_repo: "https://github.com/we-kode/mml.administration-app"
-        source_branch: "master"
-        destination_branch: "master"
-        github_token: ${{ secrets.SYNC_PAT }}
-        sync_tags: "true"
-    - uses: oprypin/find-latest-tag@v1
-      id: latest-tag
-      with:
-         repository: <your-name>/mml.administration-app
-    - name: Tag
-      run: |
-          tag=${{ steps.latest-tag.outputs.tag }}-mml
-          git config user.name "${GITHUB_ACTOR}"
-          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
-          git tag -a "${tag}" -m ""
-          git push origin "${tag}"
-      if: ${{ !endsWith(steps.latest-tag.outputs.tag,'-mml') }}
-    
-    - name: create release
-      uses: ncipollo/release-action@v1
-      if: ${{ !endsWith( steps.latest-tag.outputs.tag, '-mml' ) }}
-      with:
-        tag: ${{ steps.latest-tag.outputs.tag }}-mml
-        token: ${{ secrets.SYNC_PAT }}
+```powershell
+$cert = New-SelfSignedCertificate -Type Custom -Subject "CN=Example, O=Example, C=DE" `
+  -KeyUsage DigitalSignature -FriendlyName "Medialib Admin signing" `
+  -CertStoreLocation "Cert:\CurrentUser\My" `
+  -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}") `
+  -NotAfter (Get-Date).AddYears(3)
+$pwd = Read-Host -AsSecureString "Password"
+Export-PfxCertificate -Cert $cert -FilePath sign.pfx -Password $pwd
+Export-Certificate -Cert $cert -FilePath sign.cer
 ```
 
-### Build the app and release it.
+Commit the public `sign.cer` to the branch `customization` of your fork; the workflow adds it to the release. Never commit `sign.pfx`. With a bought certificate use its `.pfx` and its subject instead and skip the `.cer`.
 
-:::caution Windows signing
-On windows you need to [create a pfx certificate](https://sahajrana.medium.com/how-to-generate-a-pfx-certificate-for-flutter-windows-msix-lib-a860cdcebb8) to sign the msxi so windows will allow to install the app.
-:::
+### 2. Create the secrets
 
-:::caution macOS build not signed
-This example action does not create a signed macOS app. The app cretaed for macOS will not run on your mac machines, cause of unknown developer. You need to sign it first. Please check [this guide](https://medium.com/flutter-community/build-sign-and-deliver-flutter-macos-desktop-applications-on-github-actions-5d9b69b0469c) how to sign the macOS app.
-:::
+| Secret | Value |
+| --- | --- |
+| `SIGN_KEY` | `sign.pfx` [base64 encoded](./fork-and-release.md#create-the-github-secrets) |
+| `SIGN_PASS` | password of the `.pfx` |
+| `SIGN_SUB` | subject of the certificate, e.g. `CN=Example, O=Example, C=DE` |
+
+### 3. Install
+
+With a self-signed certificate, admins import `sign.cer` once before installing the `.msix`: open the file, choose **Install Certificate → Local Machine** and the store **Trusted People**.
+
+## macOS
+
+The workflow signs the app with a **Developer ID Application** certificate, notarizes it at Apple and packs it into a `.dmg`, so macOS opens it without warnings. You need a membership in the [Apple Developer Program](https://developer.apple.com/programs/). Only the account holder can create Developer ID certificates.
+
+### 1. Register the App ID
+
+In [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/identifiers/list) add an **App ID** of type **App** for macOS. The bundle id is the bundle id of your `config/app.cfg`. Note the **Team ID** shown at the top right.
+
+### 2. Create the Developer ID Application certificate
+
+Create a certificate signing request as described for [iOS](./ios.md#2-create-the-apple-distribution-certificate). Upload it under **Certificates → +** as **Developer ID Application** (profile type G2 Sub-CA) and export certificate and private key as `.p12` with a password. The certificate is valid for five years.
+
+### 3. Create the provisioning profile
+
+The app stores its credentials in the keychain and needs a profile for this entitlement. Under **Profiles → +** choose **Developer ID** in the section Distribution, select the App ID and the certificate and download the `.provisionprofile` file.
+
+### 4. Create the App Store Connect API key
+
+Notarization uses an API key. In [App Store Connect](https://appstoreconnect.apple.com/access/integrations/api) open **Users and Access → Integrations → Team Keys**, create a key with the role **Developer** and download the `AuthKey_<Key ID>.p8`. It can be downloaded only once. Note the **Key ID** and the **Issuer ID** shown above the list.
+
+### 5. Create the secrets
+
+| Secret | Value |
+| --- | --- |
+| `MACOS_CERTIFICATE` | Developer ID `.p12` [base64 encoded](./fork-and-release.md#create-the-github-secrets) |
+| `MACOS_CERTIFICATE_PWD` | password of the `.p12` |
+| `MACOS_PROVISIONING_PROFILE_B64` | `.provisionprofile` base64 encoded |
+| `APPLE_TEAM_ID` | Team ID |
+| `APPLE_API_KEY_ID` | Key ID |
+| `APPLE_API_ISSUER_ID` | Issuer ID |
+| `APPLE_API_KEY_B64` | `AuthKey_<Key ID>.p8` base64 encoded |
+
+## Workflow
+
+Create `.github/workflows/main.yml` in the branch `customization` of your `mml.administration-app` fork. Replace `mml` with your tag suffix, `Medialib-Admin` with the name of your files and `Example` with the publisher display name.
 
 ```yaml
 name: Flutter CI
 
-# Controls when the workflow will run
 on:
   push:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+-mml"
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   prepare:
     runs-on: ubuntu-latest
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-      # Runs a set of commands using the runners shell
       - name: Customizing
         run: |
           version="${{ github.ref_name }}"
@@ -118,20 +107,21 @@ jobs:
           ./customize
           sed -i -E "s/version: [0-9]+.[0-9]+.[0-9]+\+[0-9]+/version: $ver_dump+${{github.run_number}}/" "./mml.administration-app/pubspec.yaml"
           sed -i -E "s/#define VERSION_AS_STRING \"1.0.0\"/#define VERSION_AS_STRING \"$ver_dump\"/" "./mml.administration-app/windows/runner/Runner.rc"
+          sed -i -E "s/ DEVELOPMENT_TEAM = [A-Z0-9]+;/ DEVELOPMENT_TEAM = ${{ secrets.APPLE_TEAM_ID }};/" "./mml.administration-app/macos/Runner.xcodeproj/project.pbxproj"
       - name: Artefact customized version
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: Admin-Custom
+          name: Medialib-Admin-Custom
           path: mml.administration-app
-        
+
   build-and-release-linux:
     runs-on: ubuntu-latest
     needs: [prepare]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: Admin-Custom
+          name: Medialib-Admin-Custom
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
@@ -140,19 +130,16 @@ jobs:
       - name: Install project dependencies
         run: flutter pub get
       - name: Generate intermediates
-        run: |
-          flutter pub run build_runner build --delete-conflicting-outputs
-          flutter gen-l10n
-      - name: Enable linux build
-        run: flutter config --enable-linux-desktop
+        run: flutter gen-l10n
       - name: Build artifacts
         run: |
+          flutter config --enable-linux-desktop
           flutter build linux --release
       - name: Archive Release
         uses: thedoctor0/zip-release@master
         with:
           type: 'zip'
-          filename: Admin-${{github.ref_name}}-linux.zip
+          filename: Medialib-Admin-${{github.ref_name}}-linux.zip
           directory: build/linux/x64/release/bundle
       - name: Linux Release
         uses: softprops/action-gh-release@v1
@@ -160,8 +147,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: build/linux/x64/release/bundle/Admin-${{github.ref_name}}-linux.zip
-  
+          files: build/linux/x64/release/bundle/Medialib-Admin-${{github.ref_name}}-linux.zip
+
   build-and-release-windows:
     runs-on: windows-latest
     needs: [prepare]
@@ -170,49 +157,38 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      # save the sign key as base64 string in github secrets
       - name: Prepare sign key
-        env:
-           PFX_CONTENT: ${{ secrets.SIGN_KEY }}
-        run: |
-           $pfxPath = Join-Path -Path $env:RUNNER_TEMP -ChildPath "sign.pfx";
-           $encodedBytes = [System.Convert]::FromBase64String($env:PFX_CONTENT);
-           [IO.File]::WriteAllBytes($pfxPath, $encodedBytes)
-           Write-Output "::set-output name=PFX_PATH::$pfxPath";
         id: create-pfx
         shell: pwsh
-      - uses: actions/download-artifact@v3
+        env:
+          PFX_CONTENT: ${{ secrets.SIGN_KEY }}
+        run: |
+          $pfxPath = Join-Path -Path $env:RUNNER_TEMP -ChildPath "sign.pfx";
+          [IO.File]::WriteAllBytes($pfxPath, [System.Convert]::FromBase64String($env:PFX_CONTENT))
+          "PFX_PATH=$pfxPath" >> $env:GITHUB_OUTPUT
+      - uses: actions/download-artifact@v4
         with:
-          name: Admin-Custom
+          name: Medialib-Admin-Custom
       - name: Install project dependencies
         run: flutter pub get
       - name: Generate intermediates
-        run: |
-          flutter pub run build_runner build --delete-conflicting-outputs
-          flutter gen-l10n
-      - name: Enable windows build
-        run: flutter config --enable-windows-desktop
-      # SIGN_PASS: Password of the sign cert.
-      # SIGN_SUB: Subject of the sign cert, e.g
-      #  CN = MML
-      #  OU = ORGANIZATION UNIT
-      #  O = MML
-      #  C = US
+        run: flutter gen-l10n
       - name: Build artifacts
         run: |
           $version = "${{ github.ref_name }}"
-          $ver_dump = $version.replace('-ecg', '.0')
+          $ver_dump = $version.replace('-mml', '.0')
+          flutter config --enable-windows-desktop
           flutter build windows --release
-          flutter pub run msix:create --version $ver_dump --install-certificate false -c ${{ steps.create-pfx.outputs.PFX_PATH }} -p ${{ secrets.SIGN_PASS }} -u <Username> -b ${{ secrets.SIGN_SUB }}
+          dart run msix:create --version $ver_dump --install-certificate false -c ${{ steps.create-pfx.outputs.PFX_PATH }} -p ${{ secrets.SIGN_PASS }} -u Example -b "${{ secrets.SIGN_SUB }}"
           mkdir rel
-          echo "Before installing app. Install the publisher public key in your Computer Certmanager as Trusted CA Cert, so the publisher will be trusted on your machine." > rel/README_FIRST.txt
+          echo "Install sign.cer as Trusted People certificate of the local machine before installing the app." > rel/README_FIRST.txt
           cp sign.cer rel/sign.cer
-          mv  build/windows/runner/Release/mml_admin.msix rel/Admin-${{github.ref_name}}.msix
+          mv build/windows/x64/runner/Release/mml_admin.msix rel/Medialib-Admin-${{github.ref_name}}.msix
       - name: Archive Release
         uses: thedoctor0/zip-release@master
         with:
           type: 'zip'
-          filename: Admin-${{github.ref_name}}-windows.zip
+          filename: Medialib-Admin-${{github.ref_name}}-windows.zip
           directory: rel
       - name: Windows Release
         uses: softprops/action-gh-release@v1
@@ -220,61 +196,121 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: rel/Admin-${{github.ref_name}}-windows.zip
+          files: |
+           rel/Medialib-Admin-${{github.ref_name}}-windows.zip
+           rel/Medialib-Admin-${{github.ref_name}}.msix
       - name: Cleanup
-        run: |
-           Remove-Item -Path ${{ steps.create-pfx.outputs.PFX_PATH }};
-  
+        if: always()
+        run: Remove-Item -Path ${{ steps.create-pfx.outputs.PFX_PATH }}
+
   build-and-release-macos:
     runs-on: macos-latest
     needs: [prepare]
     env:
       MACOS_APP_RELEASE_PATH: build/macos/Build/Products/Release
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
-          name: Admin-Custom
-      - uses: subosito/flutter-action@v1
+          name: Medialib-Admin-Custom
+      - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
       - name: Install project dependencies
         run: flutter pub get
       - name: Generate intermediates
+        run: flutter gen-l10n
+      - name: Prepare keychain and provisioning profile
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          MACOS_PROVISIONING_PROFILE: ${{ secrets.MACOS_PROVISIONING_PROFILE_B64 }}
         run: |
-          flutter pub run build_runner build --delete-conflicting-outputs
-          flutter gen-l10n
-      - name: Enable macOS build
-        run: flutter config --enable-macos-desktop
-      - name: Build artifacts
-        run: flutter build macos --release
-      - name: Create a dmg
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+          KEYCHAIN_PWD=$(openssl rand -base64 24)
+          echo -n "$MACOS_CERTIFICATE" | base64 --decode -o "$RUNNER_TEMP/certificate.p12"
+          security create-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PWD" "$KEYCHAIN_PATH"
+          security import "$RUNNER_TEMP/certificate.p12" -k "$KEYCHAIN_PATH" -P "$MACOS_CERTIFICATE_PWD" -f pkcs12 -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PWD" "$KEYCHAIN_PATH" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -1 | awk '{print $2}')
+          if [ -z "$IDENTITY" ]; then echo "::error::No 'Developer ID Application' identity found in MACOS_CERTIFICATE"; exit 1; fi
+          echo "SIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+
+          PP_PATH="$RUNNER_TEMP/profile.provisionprofile"
+          echo -n "$MACOS_PROVISIONING_PROFILE" | base64 --decode -o "$PP_PATH"
+          security cms -D -i "$PP_PATH" > "$RUNNER_TEMP/profile.plist"
+          PP_UUID=$(plutil -extract UUID raw -o - "$RUNNER_TEMP/profile.plist")
+          PP_NAME=$(plutil -extract Name raw -o - "$RUNNER_TEMP/profile.plist")
+          for dir in "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
+            mkdir -p "$dir"
+            cp "$PP_PATH" "$dir/$PP_UUID.provisionprofile"
+          done
+
+          PBX=macos/Runner.xcodeproj/project.pbxproj
+          sed -i '' \
+            -e 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' \
+            -e 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "Developer ID Application";/' \
+            -e "s|PROVISIONING_PROFILE_SPECIFIER = \"\";|PROVISIONING_PROFILE_SPECIFIER = \"$PP_NAME\";|" \
+            "$PBX"
+      - name: Build app
         run: |
-          echo "Install create-dmg"
+          flutter config --enable-macos-desktop
+          flutter build macos --release
+      - name: Codesign app with hardened runtime
+        run: |
+          APP=$(find "$MACOS_APP_RELEASE_PATH" -maxdepth 1 -name "*.app" | head -1)
+          echo "APP_PATH=$APP" >> "$GITHUB_ENV"
+          codesign -d --entitlements - --xml "$APP" > "$RUNNER_TEMP/entitlements.plist"
+          find "$APP/Contents/Frameworks" -depth \( -name "*.framework" -o -name "*.dylib" \) -print0 |
+            xargs -0 -I{} codesign --force --timestamp --options runtime --sign "$SIGN_IDENTITY" "{}"
+          codesign --force --timestamp --options runtime --entitlements "$RUNNER_TEMP/entitlements.plist" --sign "$SIGN_IDENTITY" "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+      - name: Create and sign dmg
+        run: |
           brew install create-dmg
-          cd $MACOS_APP_RELEASE_PATH
-          create-dmg \
-            --volname "<App Title>" \
-            --window-pos 200 120 \
-            --window-size 800 529 \
-            --icon-size 130 \
-            --text-size 14 \
-            --icon "<App Title>.app" 260 250 \
-            --hide-extension "<App Title>.app" \
-            --app-drop-link 540 250 \
-            --hdiutil-quiet \
-            "Admin-${{github.ref_name}}-macos.dmg" \
-            "<App Title>.app"
+          mkdir -p rel "$RUNNER_TEMP/dmg"
+          ditto "$APP_PATH" "$RUNNER_TEMP/dmg/$(basename "$APP_PATH")"
+          APP_NAME=$(basename "$APP_PATH")
+          DMG="rel/Medialib-Admin-${{ github.ref_name }}-macos.dmg"
+          echo "DMG_PATH=$DMG" >> "$GITHUB_ENV"
+          create-dmg --volname "${APP_NAME%.app}" --window-pos 200 120 --window-size 800 529 \
+            --icon-size 130 --text-size 14 --icon "$APP_NAME" 260 250 --hide-extension "$APP_NAME" \
+            --app-drop-link 540 250 --hdiutil-quiet "$DMG" "$RUNNER_TEMP/dmg"
+          codesign --force --timestamp --sign "$SIGN_IDENTITY" "$DMG"
+      - name: Notarize and staple dmg
+        env:
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+          APPLE_API_KEY_B64: ${{ secrets.APPLE_API_KEY_B64 }}
+        run: |
+          KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
+          echo -n "$APPLE_API_KEY_B64" | base64 --decode -o "$KEY_PATH"
+          AUTH=(--key "$KEY_PATH" --key-id "$APPLE_API_KEY_ID" --issuer "$APPLE_API_ISSUER_ID")
+          RESULT=$(xcrun notarytool submit "$DMG_PATH" "${AUTH[@]}" --wait --timeout 30m --output-format json)
+          echo "$RESULT"
+          SUBMISSION_ID=$(echo "$RESULT" | jq -r .id)
+          if [ "$(echo "$RESULT" | jq -r .status)" != "Accepted" ]; then
+            xcrun notarytool log "$SUBMISSION_ID" "${AUTH[@]}"
+            exit 1
+          fi
+          xcrun stapler staple "$DMG_PATH"
+          spctl --assess --type open --context context:primary-signature --verbose=2 "$DMG_PATH"
       - name: macOS Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: build/macos/Build/Products/Release/Admin-${{github.ref_name}}-macos.dmg
+          files: ${{ env.DMG_PATH }}
+      - name: Cleanup
+        if: always()
+        run: |
+          security delete-keychain "$KEYCHAIN_PATH" || true
+          rm -f "$RUNNER_TEMP/certificate.p12" "$RUNNER_TEMP/AuthKey.p8" "$RUNNER_TEMP/profile.provisionprofile"
 ```
 
-### Run action release
-
-The sync fork action in this example will sync every week and check for a new relase. You can start the sync fork action manually. The main action will be automatically triggered if a new release exists.
-The result will be a binary file for linux, a msix installer for windows and a dmg file for macOS.
+If notarization fails, the step prints the log of Apple with the reason, e.g. an unsigned framework or an expired certificate.

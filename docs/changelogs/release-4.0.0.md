@@ -12,7 +12,7 @@ Highlights:
 - Records can be synchronized with partner instances ([federation](../concepts/federation)).
 - Users can [share](../concepts/sharing) searches, playbacks and download links.
 - Admins can send [announcements](../concepts/announcements) to the mobile app and change covers of records.
-- TLS can be terminated at the reverse proxy or at an [external proxy](../setup/backend#ssl-termination-at-an-external-proxy).
+- TLS can be terminated at the reverse proxy or at an [external proxy](../setup/backend/operations#ssl-termination-at-an-external-proxy).
 - The services use .NET 10 and a new message bus library.
 
 Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end of this page.
@@ -31,7 +31,7 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 - TLS is optional. Without `TLS:Cert` the service listens on http and trusts the forwarded headers of the reverse proxy from private networks or the networks in `ForwardedHeaders:KnownNetworks`.
 - The secret of the federation keys can be read from a file in `FEDERATION_KEY_SECRET_FILE`.
 - The Docker image contains the third-party notices of all packages.
-- The optional setting `Connection:ServerName` announces a new domain to the apps and the admin app, so registered devices [move to another domain](../setup/backend#move-to-another-domain) without registering again.
+- The optional setting `Connection:ServerName` announces a new domain to the apps and the admin app, so registered devices [move to another domain](../setup/backend/operations#move-to-another-domain) without registering again.
 
 ### Bugfixes
 
@@ -120,11 +120,11 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 
 ### New features
 
-- TLS can be terminated by the reverse proxy (`PROXY_TLS=true`, default) or by an [external proxy](../setup/backend#ssl-termination-at-an-external-proxy) (`PROXY_TLS=false`). Behind an external proxy the reverse proxy takes the client ip from `X-Forwarded-For` of the proxies in `TRUSTED_PROXY`.
-- `PROXY_TLS=both` accepts direct clients with TLS on `SSL_PORT` and an external proxy over http on `HTTP_PORT` at the same time, e.g. while [moving to another domain](../setup/backend#move-to-another-domain).
+- TLS can be terminated by the reverse proxy (`PROXY_TLS=true`, default) or by an [external proxy](../setup/backend/operations#ssl-termination-at-an-external-proxy) (`PROXY_TLS=false`). Behind an external proxy the reverse proxy takes the client ip from `X-Forwarded-For` of the proxies in `TRUSTED_PROXY`.
+- `PROXY_TLS=both` accepts direct clients with TLS on `SSL_PORT` and an external proxy over http on `HTTP_PORT` at the same time, e.g. while [moving to another domain](../setup/backend/operations#move-to-another-domain).
 - The reverse proxy forwards Identity routes to Identity and all other requests to Media, and passes `X-Forwarded-Proto` to the services.
-- The reverse proxy writes its [logs](../setup/backend#logs) to files in `PROXY_LOGS` instead of the console. Share links are not logged.
-- Secrets of Identity and Media are read from files, see [Encryption and Signing](../setup/backend#encryption-and-signing).
+- The reverse proxy writes its [logs](../setup/backend/reverse-proxy#logs) to files in `PROXY_LOGS` instead of the console. Share links are not logged.
+- Secrets of Identity and Media are read from files, see [Encryption and Signing](../setup/backend/certificates-and-keys#encryption-and-signing).
 
 ### Breaking changes
 
@@ -137,7 +137,7 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 This guide describes the changes admins have to make when updating an existing backend from 3.x to 4.0.0. New installations follow the [backend setup](../setup/backend) instead.
 
 :::caution Backup
-Create a backup of the databases, the records folder and the certificates before updating. See [Upgrading postgres version](../setup/backend#create-dumps-of-all-databases-you-want-to-backup) on how to create database dumps.
+Create a backup of the databases, the records folder and the certificates before updating. See [Upgrading postgres version](../setup/backend/operations#create-dumps-of-all-databases-you-want-to-backup) on how to create database dumps.
 :::
 
 ### 1. Stop the services
@@ -157,7 +157,7 @@ mkdir -p proxy/logs
 sudo chown -R 1001:1001 proxy/
 ```
 
-The template contains the routes `/hub/federation` and `/media/s/` of the Media service. The script generates the listen configuration of the reverse proxy, see [SSL/TLS](../setup/backend#ssltls). Set up the rotation of the proxy logs as described in [Logs](../setup/backend#logs).
+The template contains the routes `/hub/federation` and `/media/s/` of the Media service. The script generates the listen configuration of the reverse proxy, see [SSL/TLS](../setup/backend/certificates-and-keys#ssltls). Set up the rotation of the proxy logs as described in [Logs](../setup/backend/reverse-proxy#logs).
 
 Add the new values to the existing `.env` file and set the new image versions in `IDENTITY_VERSION` and `MEDIA_VERSION`:
 
@@ -188,7 +188,7 @@ PROXY_LOGS=/home/mml/medialib/proxy/logs
 ```
 
 :::danger Set the instance name before the first start
-On the first start the Media service marks all existing records as owned by `INSTANCE`. Set the final name before starting the services and do not change it afterwards. The Media service stores the name on the first start and refuses to start with another name, see [Instance name](../setup/backend#instance-name). The name may contain letters, digits, `.`, `_` and `-` with up to 64 characters and must be unique among your partner instances.
+On the first start the Media service marks all existing records as owned by `INSTANCE`. Set the final name before starting the services and do not change it afterwards. The Media service stores the name on the first start and refuses to start with another name, see [Instance name](../setup/backend/prepare-server#instance-name). The name may contain letters, digits, `.`, `_` and `-` with up to 64 characters and must be unique among your partner instances.
 :::
 
 Create the secrets folders and set the user rights:
@@ -198,7 +198,7 @@ mkdir -p identity/secrets media/secrets
 sudo chown -R 1001:1001 identity/secrets media/secrets
 ```
 
-If you used `ENCRYPT_SECRET`, `SIGN_SECRET` or `FEDERATION_KEY_SECRET` before, move each secret unchanged into a file and set the matching `_FILE` variable instead, see [Encryption and Signing](../setup/backend#encryption-and-signing). The variables still work, but the secrets are then visible in the environment of the containers.
+If you used `ENCRYPT_SECRET`, `SIGN_SECRET` or `FEDERATION_KEY_SECRET` before, move each secret unchanged into a file and set the matching `_FILE` variable instead, see [Encryption and Signing](../setup/backend/certificates-and-keys#encryption-and-signing). The variables still work, but the secrets are then visible in the environment of the containers.
 
 ### 3. Keep the identity certificates
 
@@ -223,7 +223,7 @@ In `identity/appsettings.json`:
 - Remove `EncryptionCert` and `SigningCert` from the `OpenId` section.
 - Rename the section `MassTransit` to `MessageBus`.
 - Use the Redis connection string without TLS: `"DistributedCache": "wekode.mml.cache:6379,password=<password>"`.
-- Optional: remove the `TLS` section, if TLS is terminated by the reverse proxy or an external proxy, see [SSL/TLS](../setup/backend#ssltls).
+- Optional: remove the `TLS` section, if TLS is terminated by the reverse proxy or an external proxy, see [SSL/TLS](../setup/backend/certificates-and-keys#ssltls).
 
 ```json
 "OpenId": {
@@ -245,8 +245,8 @@ In `media/appsettings.json`:
 
 - Remove `EncryptionCert` from the `OpenId` section. Media validates the tokens with the public keys of Identity.
 - Rename the section `MassTransit` to `MessageBus`.
-- Add the `Federation` section. Federation is always enabled and uses the address of `OpenId:Issuer`; set `PublicUrl` only if partners reach this instance at another address, see [Federation](../setup/backend#federation).
-- Optional: remove the `TLS` section, if TLS is terminated by the reverse proxy or an external proxy, see [SSL/TLS](../setup/backend#ssltls).
+- Add the `Federation` section. Federation is always enabled and uses the address of `OpenId:Issuer`; set `PublicUrl` only if partners reach this instance at another address, see [Federation](../setup/backend/media#federation).
+- Optional: remove the `TLS` section, if TLS is terminated by the reverse proxy or an external proxy, see [SSL/TLS](../setup/backend/certificates-and-keys#ssltls).
 
 ```json
 "OpenId": {
@@ -303,4 +303,4 @@ Federation is enabled after the update without further configuration. Nobody can
 [Sharing](../concepts/sharing) needs the route `/media/s/` of the new reverse proxy template. Without it, links to searches and downloads do not work. Afterwards:
 
 1. Create [share rules](../concepts/sharing#who-may-share) for the groups whose users should be allowed to share. Without rules users can not share.
-2. Optional: adjust the look of the share pages in [`styling.json`](../setup/backend#style-the-share-pages), e.g. if you customized your app. The compose file of the deployment mounts the file from `MEDIA_STYLING`. Without the file the pages look like the unchanged app.
+2. Optional: adjust the look of the share pages in [`styling.json`](../setup/backend/media#style-the-share-pages), e.g. if you customized your app. The compose file of the deployment mounts the file from `MEDIA_STYLING`. Without the file the pages look like the unchanged app.
