@@ -126,7 +126,7 @@ jobs:
         with:
           channel: 'stable'
       - name: Install dependencies
-        run: sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev libjsoncpp-dev libsecret-1-0
+        run: sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libsecret-1-dev libjsoncpp-dev libsecret-1-0 libx11-dev libxi-dev
       - name: Install project dependencies
         run: flutter pub get
       - name: Generate intermediates

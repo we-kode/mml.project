@@ -105,16 +105,23 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 - Covers load faster.
 - The color scheme is updated and animations use Lottie instead of Rive.
 - Registration and connection settings QR codes use the domain announced by the server in `Connection:ServerName`.
+- The update check shows the changelog in the language of the app and opens the downloaded installer.
+- Updated to Flutter 3.47 and current packages. The macOS app is built with the Swift Package Manager instead of CocoaPods.
 
 ### Bugfixes
 
 - The app stays usable with servers without synchronization, and sharing is hidden on servers without sharing.
 - The registration socket is closed when the dialog is closed.
 - Records, that can not be deleted, are shown with their icon, and the folder filter works.
+- Closing the upload dialog cancels the running upload without an error.
+- The Windows app closes immediately.
+- The filter field of the lists does not overflow next to the navigation.
+- The `customize` script keeps the Windows window, when it sets the title.
 
 ### Breaking changes
 
-- None. The admin app works with servers of the previous release, but federation and sharing need the services of this release.
+- The admin app works with servers of the previous release, but federation and sharing need the services of this release.
+- Forks: the Linux build job needs the packages `libx11-dev` and `libxi-dev`, see the [workflow](../customize/administration-app.md).
 
 ## Deployment
 
