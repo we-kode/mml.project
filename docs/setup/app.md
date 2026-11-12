@@ -12,6 +12,8 @@ We will create release tags when new features or improvemnets are available. So 
 
 Please check the official flutter homepage to learn on how to build the app for [android](https://docs.flutter.dev/deployment/android) and [ios](https://docs.flutter.dev/deployment/ios) from source.
 
+The app needs Flutter 3.47 or later. The Android build uses Gradle 9.3.1, the Android Gradle plugin 9.1.0 and Java 17; the app runs on Android 7 (API 24) and iOS 15 or later.
+
 ## First start
 
 On first start a private/public key will be generated to sign your requests to the backed server.
@@ -40,8 +42,4 @@ To test without a car, use the [Desktop Head Unit](https://developer.android.com
 
 ## Licenses
 
-The licenses of all used packages are listed in the settings under **Licenses**. The list `lib/oss_licenses.dart` is generated with [dart_pubspec_licenses](https://pub.dev/packages/dart_pubspec_licenses) and must be generated again after dependencies changed:
-
-```bash
-dart run dart_pubspec_licenses:generate
-```
+The licenses of all packages and libraries bundled with the app are listed in the settings under **Licenses**. Flutter collects them during the build, so the list does not have to be generated after dependencies changed.
