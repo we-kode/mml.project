@@ -77,20 +77,31 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 - Filter records by the group of a list.
 - Android Auto works.
 - The player uses the dark surface in dark mode, and the color scheme template is updated.
-- The Android Gradle plugin is raised to 8.9.1.
+- Updated to Flutter 3.47, [material_ui](https://pub.dev/packages/material_ui) and current packages. Android is built with Gradle 9.3.1, the Android Gradle plugin 9.1.0, Kotlin 2.4.0 and Java 17.
+- The app is shown edge-to-edge on Android and can be used in landscape on Android and iOS. On low screens the player uses a compact layout.
+- The privacy policy and the legal information open in the in-app browser.
+- The licenses page lists the licenses of all packages and libraries bundled with the app.
+- Favorites appear immediately after a playlist was created or imported.
 - The app [moves to another domain](../setup/app#server-address) of the server in the background, after it checked that it is registered there.
 
 ### Bugfixes
 
 - The player heats the device less, uses less battery and loads records with less work.
 - The Android media notification is removed when the player is closed and no longer gets stuck.
-- The app is offered for opening `.mml` files on Android and iOS.
+- The app is offered for opening `.mml` files on Android and iOS, also on Android 16, which detects them as `text/mathml`.
+- Offline records stay playable, when the device is registered again without removing the registration before. Records, that already became unplayable this way, have to be downloaded again.
+- The play button switches to pause, when the playback starts.
+- The back button of the device leaves an opened folder first.
+- The date filter of the records opens without a crash.
+- A message is shown, if a link can not be opened.
 - The app launches on iOS 27 with the UIScene lifecycle.
 - The playback state is shown correctly.
 
 ### Breaking changes
 
 - None. Sharing and announcements need the services of this release.
+- The app requires iOS 15 or Android 7 (API 24). Devices with older versions keep the installed version.
+- Forks: building needs Flutter 3.47 and Java 17. The privacy policy is only shown, if `privacyUrl` is set in `app.cfg`, see [Customize](../customize/fork-and-release.md#customize).
 
 ## Admin app
 
