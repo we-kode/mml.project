@@ -24,13 +24,15 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 - [Federation](../concepts/federation) of partner instances with invitation codes, rotating signing keys, chunked record transfers, transfer progress, revoking a synchronization, address changes of partners and an audit log.
 - [Share links](../concepts/sharing) for searches, playbacks and downloads with share rules per group. Download and landing pages are served under `/media/s/` and can be styled with `styling.json`.
 - [Announcements](../concepts/announcements) for the mobile app.
-- Covers can be changed and are stored as files instead of base64. Unused covers are cleaned up automatically.
+- Covers can be changed and are stored as files instead of base64. Covers of existing records are moved into files on the first start. Unused covers are cleaned up automatically.
 - Every record knows the instance it belongs to (`INSTANCE`).
 - Indexing runs in the service instead of through the message bus.
 - MP3 files are accepted with all common MIME types.
 - TLS is optional. Without `TLS:Cert` the service listens on http and trusts the forwarded headers of the reverse proxy from private networks or the networks in `ForwardedHeaders:KnownNetworks`.
 - The secret of the federation keys can be read from a file in `FEDERATION_KEY_SECRET_FILE`.
 - The Docker image contains the third-party notices of all packages.
+- Updated dependencies, e.g. OpenIddict 7.8 and xFFmpeg.NET 7.4. No configuration or database change is needed.
+- The API version in the url is validated. Requests with a version an endpoint does not provide return 404. All versions used by the apps, the admin app and federation partners stay supported.
 - The optional setting `Connection:ServerName` announces a new domain to the apps and the admin app, so registered devices [move to another domain](../setup/backend/operations#move-to-another-domain) without registering again.
 
 ### Bugfixes
@@ -43,6 +45,7 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 - .NET 10 and Rebus instead of MassTransit. The configuration section `MassTransit` is renamed to `MessageBus` and the service uses the queue `mml.media.queue`.
 - `OpenId:EncryptionCert` is removed. Media validates the JSON Web Tokens of Identity with its public keys.
 - `INSTANCE` is required and can not be changed after the first start.
+- Apps before 3.0 receive records without covers, since they can not load cover files. Playback is not affected.
 - The reverse proxy has to forward `/hub/federation` and `/media/s/` to the service.
 
 ## Identity
@@ -53,7 +56,9 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 - The encryption and signing certificates are created automatically in `IDENTITY_SECRETS_PATH` and can be protected with secrets. The secrets can be read from files in `ENCRYPT_SECRET_FILE` and `SIGN_SECRET_FILE`.
 - Filter for inactive clients.
 - TLS is optional. Without `TLS:Cert` the service listens on http and trusts the forwarded headers of the reverse proxy from private networks or the networks in `ForwardedHeaders:KnownNetworks`.
-- The Docker image contains the third-party notices of all packages.
+- The Docker image contains the third-party notices of all packages and of content embedded in them, e.g. the EFF wordlist of PasswordGenerator under CC BY 3.0.
+- Updated dependencies, e.g. OpenIddict 7.8 and Quartz.NET 4. Existing client secrets stay valid and no database migration is needed.
+- The API version in the url is validated. The client endpoints accept `v1.0` and `v2.0`, which the app uses since 3.0, all other endpoints `v1.0`. Requests with another version return 404.
 
 ### Bugfixes
 
@@ -96,6 +101,7 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 - A message is shown, if a link can not be opened.
 - The app launches on iOS 27 with the UIScene lifecycle.
 - The playback state is shown correctly.
+- Updating the connection settings by scanning the QR code of the admin app succeeds again for registered clients. The registration check used a url without API version, which Identity answers with 404.
 
 ### Breaking changes
 
@@ -155,7 +161,7 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 This guide describes the changes admins have to make when updating an existing backend from 3.x to 4.0.0. New installations follow the [backend setup](../setup/backend) instead.
 
 :::caution Backup
-Create a backup of the databases, the records folder and the certificates before updating. See [Upgrading postgres version](../setup/backend/operations#create-dumps-of-all-databases-you-want-to-backup) on how to create database dumps.
+Create a backup of the databases, the records folder and the certificates before updating. See [Update database](../setup/backend/operations#2-create-dumps-of-the-databases) on how to create database dumps.
 :::
 
 ### 1. Stop the services

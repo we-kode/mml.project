@@ -84,6 +84,10 @@ PGDATA_VOL=/home/mml/medialib/db/data
 DB_CONFIG_VOL=/home/mml/medialib/db/config
 ```
 
+:::tip
+Set `POSTRES_VERSION` to a fixed version, e.g. `18.6`, instead of `latest`. A new major version of postgres can not start with the data of the old one. See [Update database](./operations.md#update-database) on how to update postgres later.
+:::
+
 Set user rights of the folder to the [docker user](./01-prepare-server.md#create-mml-user) and start the database service.
 
 ```bash
