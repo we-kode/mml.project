@@ -111,56 +111,88 @@ Each device with a current app moves to `mml.example.com` on its next start. New
 
 **6. Switch off the old domain:** Remove the port forwarding of `5050` in the router. Nothing else changes, devices at `mml.example.com` do not notice anything. Move devices, which still use the old domain, by scanning the connection settings QR code of the admin app under **Update connection settings** in the app.
 
-## Upgrading postgres version
+## Update database
 
-It is recommended to use a fixed version of the postgres docker image and not the latest tag. When you want to upgrade to newer version of postgres follow the following steps:
+Use a fixed version of the postgres docker image in `POSTRES_VERSION` and not the `latest` tag, so postgres is only updated when you decide to.
 
-### Stop all running services
+- **Minor version**, e.g. `18.5` to `18.6`: Set the new version in `~/medialib/.env` and run `sudo docker compose up -d wekode.mml.db`. The data stays compatible.
+- **Major version**, e.g. `17.6` to `18.1`: The new version can not start with the data of the old one. Dump the databases with the old version and import them into the new version as described below.
 
-```bash
-docker compose down
-```
+The examples use the paths of [step 3](./03-database.md) and the default database names `identity` and `media`. Run all commands in `~/medialib`.
 
-### Create dumps of all databases you want to backup
+:::caution Where the dumps are stored
+`pg_dump` and `psql` run inside the container, so the paths of `-f` are paths inside the container. Only the data folder `PGDATA_VOL` is mounted into the container as `/data`. Write and read the dumps in `/data`, which is `~/medialib/db/data` on the host. A dump written to another path inside the container, e.g. `/tmp`, is not on the host and is lost when the container is removed.
+:::
 
-```bash
-docker compose up wekode.mml.db -d
-docker exec -it wekode.mml.db pg_dump <database> -U <superuser> > <database>.sql
-```
-
-### Stop Database service
+### 1. Stop all services except the database
 
 ```bash
-docker compose down wekode.mml.db
+sudo docker compose down
+sudo docker compose up -d wekode.mml.db
 ```
 
-### Backup the db data directory
+### 2. Create dumps of the databases
+
+Dump each database with the root database user of `db/secrets/user` and enter the password of `db/secrets/password`.
 
 ```bash
-mv <db-folder-on-host>/ db-old/
-mkdir <db-folder-on-host>
+sudo docker exec -it wekode.mml.db pg_dump -U <root db user> -d identity -f /data/identity.sql
+sudo docker exec -it wekode.mml.db pg_dump -U <root db user> -d media -f /data/media.sql
 ```
-### Prepare the new version
 
-Increment the version of postgres in the env file and start the container.
+Move the dumps out of the data folder, because the new version needs an empty data folder. Keep them until the update is finished.
 
 ```bash
-docker compose up -d wekode.mml.db
+sudo docker compose down wekode.mml.db
+mkdir -p db/dumps
+sudo mv db/data/identity.sql db/data/media.sql db/dumps/
+ls -l db/dumps
 ```
 
-### Import the db dumps
+Check that both files exist and are not empty.
+
+### 3. Backup the data folder
 
 ```bash
-docker exec -i wekode.mml.db psql -U <superuser|dbuser> -d <database> -f <database>.sql
+sudo mv db/data db/data-old
+mkdir db/data
+sudo chown 1001:1001 db/data
 ```
 
-### Clean up
+### 4. Start the new version
+
+Set the new version in `~/medialib/.env`, e.g. `POSTRES_VERSION=18.1`, and start the database. Postgres initializes the empty data folder and the [initial scripts](./03-database.md#database-inital-scripts) create the empty databases and users of `db/config`.
 
 ```bash
-rm -rf db-old
-rm <database>.sql
-docker compose up -d
+sudo docker compose up -d wekode.mml.db
+sudo docker compose logs wekode.mml.db | grep "ready to accept connections"
 ```
+
+### 5. Import the dumps
+
+Copy the dumps into the data folder, so the container can read them in `/data`, and import each dump with the user of the database, so the user stays the owner of the tables. Enter the password of `identity.conf` and `media.conf`.
+
+```bash
+sudo cp db/dumps/identity.sql db/dumps/media.sql db/data/
+sudo chown 1001:1001 db/data/identity.sql db/data/media.sql
+sudo docker exec -it wekode.mml.db psql -U identity -d identity -f /data/identity.sql
+sudo docker exec -it wekode.mml.db psql -U media -d media -f /data/media.sql
+```
+
+### 6. Start all services and clean up
+
+```bash
+sudo rm db/data/identity.sql db/data/media.sql
+sudo docker compose up -d
+```
+
+Check that the admin app shows the clients and records and that the app plays records. Then remove the old data folder and the dumps.
+
+```bash
+sudo rm -rf db/data-old db/dumps
+```
+
+If the update fails, stop the database, restore `db/data-old` as `db/data`, set the old version in `~/medialib/.env` and start the services again.
 
 ## Export records to csv
 
