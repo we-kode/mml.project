@@ -40,11 +40,7 @@ One client id and admin user should be [created](../setup/backend/start-and-firs
 
 ### Licenses
 
-The licenses of all used packages are listed in the settings under **Licenses**. The list `lib/oss_licenses.dart` is generated with [dart_pubspec_licenses](https://pub.dev/packages/dart_pubspec_licenses) and must be generated again after dependencies changed:
-
-```bash
-dart run dart_pubspec_licenses:generate
-```
+The licenses of all used packages are listed in the settings under **Licenses**. The list is read at runtime from Flutter's [LicenseRegistry](https://api.flutter.dev/flutter/foundation/LicenseRegistry-class.html), which contains the licenses of all packages bundled into the app build. No generation step is needed after dependencies changed.
 
 ### Default group
 

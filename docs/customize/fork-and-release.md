@@ -35,6 +35,8 @@ Do the following in the branch `customization`. The mobile app contains the defa
 | `lib_color_schemes.g.dart` | Color scheme. [Generate](https://m3.material.io/theme-builder#/custom) your colors and replace the values. |
 | `app.cfg` | Title per language, the app or bundle id and, in the mobile app, the urls of your privacy policy and legal information (empty values are not shown). |
 
+The color schemes of both apps import `package:material_ui/material_ui.dart`. The `customize` scripts rewrite color schemes of older forks, that still import `package:flutter/material.dart`.
+
 The `customize` script clones the original repository into a subfolder (`./mml.app` or `./mml.administration-app`) and replaces the items with your configuration. It runs on Linux. To build without GitHub Actions run `./customize` and build the subfolder [from source](../setup/app.md).
 
 If you customized the title or the colors of the mobile app, adjust the [share pages](../setup/backend/07-media.md#style-the-share-pages) of your backend as well.

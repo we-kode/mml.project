@@ -82,14 +82,23 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 - Filter records by the group of a list.
 - Android Auto works.
 - The player uses the dark surface in dark mode, and the color scheme template is updated.
-- The Android Gradle plugin is raised to 8.9.1.
+- Updated to Flutter 3.47, [material_ui](https://pub.dev/packages/material_ui) and current packages. Android is built with Gradle 9.3.1, the Android Gradle plugin 9.1.0, Kotlin 2.4.0 and Java 17.
+- The app is shown edge-to-edge on Android and can be used in landscape on Android and iOS. On low screens the player uses a compact layout.
+- The privacy policy and the legal information open in the in-app browser.
+- The licenses page lists the licenses of all packages and libraries bundled with the app.
+- Favorites appear immediately after a playlist was created or imported.
 - The app [moves to another domain](../setup/app#server-address) of the server in the background, after it checked that it is registered there.
 
 ### Bugfixes
 
 - The player heats the device less, uses less battery and loads records with less work.
 - The Android media notification is removed when the player is closed and no longer gets stuck.
-- The app is offered for opening `.mml` files on Android and iOS.
+- The app is offered for opening `.mml` files on Android and iOS, also on Android 16, which detects them as `text/mathml`.
+- Offline records stay playable, when the device is registered again without removing the registration before. Records, that already became unplayable this way, have to be downloaded again.
+- The play button switches to pause, when the playback starts.
+- The back button of the device leaves an opened folder first.
+- The date filter of the records opens without a crash.
+- A message is shown, if a link can not be opened.
 - The app launches on iOS 27 with the UIScene lifecycle.
 - The playback state is shown correctly.
 - Updating the connection settings by scanning the QR code of the admin app succeeds again for registered clients. The registration check used a url without API version, which Identity answers with 404.
@@ -97,6 +106,8 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 ### Breaking changes
 
 - None. Sharing and announcements need the services of this release.
+- The app requires iOS 15 or Android 7 (API 24). Devices with older versions keep the installed version.
+- Forks: building needs Flutter 3.47 and Java 17. The privacy policy is only shown, if `privacyUrl` is set in `app.cfg`, see [Customize](../customize/fork-and-release.md#customize).
 
 ## Admin app
 
@@ -111,16 +122,23 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 - Covers load faster.
 - The color scheme is updated and animations use Lottie instead of Rive.
 - Registration and connection settings QR codes use the domain announced by the server in `Connection:ServerName`.
+- The update check shows the changelog in the language of the app and opens the downloaded installer.
+- Updated to Flutter 3.47 and current packages. The macOS app is built with the Swift Package Manager instead of CocoaPods.
 
 ### Bugfixes
 
 - The app stays usable with servers without synchronization, and sharing is hidden on servers without sharing.
 - The registration socket is closed when the dialog is closed.
 - Records, that can not be deleted, are shown with their icon, and the folder filter works.
+- Closing the upload dialog cancels the running upload without an error.
+- The Windows app closes immediately.
+- The filter field of the lists does not overflow next to the navigation.
+- The `customize` script keeps the Windows window, when it sets the title.
 
 ### Breaking changes
 
-- None. The admin app works with servers of the previous release, but federation and sharing need the services of this release.
+- The admin app works with servers of the previous release, but federation and sharing need the services of this release.
+- Forks: the Linux build job needs the packages `libx11-dev` and `libxi-dev`, see the [workflow](../customize/administration-app.md).
 
 ## Deployment
 
