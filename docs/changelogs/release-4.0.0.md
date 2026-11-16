@@ -146,7 +146,7 @@ Existing installations follow the [upgrade guide](#upgrade-from-3x) at the end o
 
 - TLS can be terminated by the reverse proxy (`PROXY_TLS=true`, default) or by an [external proxy](../setup/backend/operations#ssl-termination-at-an-external-proxy) (`PROXY_TLS=false`). Behind an external proxy the reverse proxy takes the client ip from `X-Forwarded-For` of the proxies in `TRUSTED_PROXY`.
 - `PROXY_TLS=both` accepts direct clients with TLS on `SSL_PORT` and an external proxy over http on `HTTP_PORT` at the same time, e.g. while [moving to another domain](../setup/backend/operations#move-to-another-domain).
-- The reverse proxy forwards Identity routes to Identity and all other requests to Media, and passes `X-Forwarded-Proto` to the services.
+- The reverse proxy forwards Identity routes to Identity and all other requests to Media, and passes `X-Forwarded-Proto` and the public `Host` header to the services.
 - The reverse proxy writes its [logs](../setup/backend/reverse-proxy#logs) to files in `PROXY_LOGS` instead of the console. Share links are not logged.
 - Secrets of Identity and Media are read from files, see [Encryption and Signing](../setup/backend/certificates-and-keys#encryption-and-signing).
 
