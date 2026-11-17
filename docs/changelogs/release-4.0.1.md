@@ -1,7 +1,7 @@
 ---
 title: 4.0.1
 slug: /changelogs/4.0.1
-sidebar_position: 1
+sidebar_position: 2
 ---
 
 # Release 4.0.1

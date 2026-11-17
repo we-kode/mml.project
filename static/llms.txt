@@ -25,6 +25,7 @@
 
 ## Changelogs
 
+- [Release 4.0.2](https://we-kode.github.io/mml.project/changelogs/4.0.2): Bugfixes of the message bus connection with special characters in user or password and of the login on instances with upper case letters, and the upgrade from 4.0.1.
 - [Release 4.0.1](https://we-kode.github.io/mml.project/changelogs/4.0.1): Bugfix of the reverse proxy for services without TLS and the upgrade from 4.0.0.
 - [Release 4.0.0](https://we-kode.github.io/mml.project/changelogs/4.0.0): New features, bugfixes and breaking changes of 4.0.0 and the upgrade from 3.x.
 
