@@ -11,13 +11,13 @@ title: "Step 5: Reverse proxy"
 
 [Nginx](https://www.nginx.com/) is used as reverse proxy and api gateway. This is the entrypoint to the backend from extern requests of the admin and mobile app.
 
-It forwards the openid configuration, the api and the hub `/hub/client` of the Identity service to Identity and all other requests to the Media service. These include the public pages under `/media/s/`, which open [shared links](../../concepts/sharing.mdx) in the browser. Responses of the Media service are not buffered, so large ZIP archives are streamed.
+It forwards the openid configuration, the api and the hub `/hub/client` of the Identity service to Identity, serves the [privacy policy and legal information](#privacy-policy-and-legal-information) itself and forwards all other requests to the Media service. These include the public pages under `/media/s/`, which open [shared links](../../concepts/sharing.mdx) in the browser. Responses of the Media service are not buffered, so large ZIP archives are streamed.
 
 ## Create folder
 Create the folder where the configuration will be.
 
 ```bash
-mkdir -p proxy/logs
+mkdir -p proxy/logs proxy/staticfiles
 ```
 
 ## Configuration
@@ -55,6 +55,7 @@ SSL_PORT=5555
 ## Only used with PROXY_TLS=both. The http port the reverse proxy listens on in the docker file. Must differ from INTERN_SSL_PORT.
 # INTERN_HTTP_PORT=5080
 ## Path to the folder where the default.conf.template and the executable 15-mml-listen.sh files are stored on host.
+## Optional static pages in its subfolder staticfiles are served without login: privacy.html at /privacy and legal.html at /legal.
 CONF_TEMPLATE=/home/media/medialib/proxy
 ## Optional. Path to the folder on host where the access.log and error.log of the proxy are written. Must be writable by the proxy.
 ## Share links are not logged. Rotate the logs on the host, e.g. with logrotate.
@@ -90,6 +91,14 @@ nginx does not rotate the files. Rotate them on the host, e.g. with logrotate in
         docker exec wekode.mml.reverseproxy nginx -s reopen
     endscript
 }
+```
+
+## Privacy policy and legal information
+
+The proxy serves static pages from the subfolder `staticfiles` of `CONF_TEMPLATE` without login. Store the privacy policy as `privacy.html` and the legal information as `legal.html`. They are available at `/privacy` and `/legal`, e.g. `https://<your-domain>:<SSL_PORT>/privacy`. A missing page answers with `404`. The files are read on every request, so changes need no restart.
+
+```bash
+cp privacy.html legal.html proxy/staticfiles/
 ```
 
 ## Check
