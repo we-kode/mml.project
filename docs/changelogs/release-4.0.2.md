@@ -6,13 +6,14 @@ sidebar_position: 1
 
 # Release 4.0.2
 
-This release fixes the start of Identity and Media, if the user or password of the message bus contains special characters.
+This release fixes the start of Identity and Media, if the user or password of the message bus contains special characters, and the login of the apps on instances with upper case letters in `INSTANCE`.
 
 ## Identity and Media
 
 ### Bugfixes
 
 - `MessageBus:User`, `MessageBus:Password` and `MessageBus:VirtualHost` may contain characters like `@`, `:`, `/`, `#`, `?`, `%`, `;` or `,`. Before, Identity, the Identity CLI and Media failed to start with `Invalid URI: The hostname could not be parsed.`
+- Identity issues access tokens, which Identity and Media accept, if `INSTANCE` contains upper case letters. Before, every request of the apps and the admin app was rejected with `401`, and the mobile app stayed on the loading screen. Keep `INSTANCE` unchanged, the name of an instance cannot be changed after the first start.
 
 ## Upgrade from 4.0.1
 
