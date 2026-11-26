@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Release 4.0.2
 
-This release fixes the start of Identity and Media, if the user or password of the message bus contains special characters, and the login of the apps on instances with upper case letters in `INSTANCE`.
+This release fixes the start of Identity and Media, if the user or password of the message bus contains special characters, the login of the apps on instances with upper case letters in `INSTANCE`, and the update of the admin app on Windows.
 
 ## Identity and Media
 
@@ -14,6 +14,12 @@ This release fixes the start of Identity and Media, if the user or password of t
 
 - `MessageBus:User`, `MessageBus:Password` and `MessageBus:VirtualHost` may contain characters like `@`, `:`, `/`, `#`, `?`, `%`, `;` or `,`. Before, Identity, the Identity CLI and Media failed to start with `Invalid URI: The hostname could not be parsed.`
 - Identity issues access tokens, which Identity and Media accept, if `INSTANCE` contains upper case letters. Before, every request of the apps and the admin app was rejected with `401`, and the mobile app stayed on the loading screen. Keep `INSTANCE` unchanged, the name of an instance cannot be changed after the first start.
+
+## Admin app
+
+### Bugfixes
+
+- **Update** downloads the installer and opens it on Windows. Before, the installer was downloaded, but the file explorer opened the `Documents` folder instead of the installer.
 
 ## Upgrade from 4.0.1
 
@@ -25,3 +31,5 @@ This release fixes the start of Identity and Media, if the user or password of t
 sudo docker compose pull wekode.mml.identity wekode.mml.media
 sudo docker compose up -d wekode.mml.identity wekode.mml.media
 ```
+
+4. On Windows, install the admin app 4.0.2 once manually from the [releases](https://github.com/we-kode/mml.administration-app/releases). The update button of 4.0.1 and older does not start the installer.
