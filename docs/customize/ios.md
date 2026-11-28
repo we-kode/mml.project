@@ -69,9 +69,11 @@ Without a Mac open the file in a text editor and copy the value after `<key>UUID
 
 Add the jobs to `.github/workflows/main.yml` of the [Android page](./android.md#workflow). Replace `com.example.medialib` with your bundle id and `Medialib` with the name of your files.
 
+From April 2027 the App Store accepts only apps built with the iOS 27 SDK or later, otherwise App Store Connect warns with `ITMS-90725`. The SDK comes with Xcode 27, which GitHub provides on the `xcode-27` runner. The `macos-15` and `macos-26` runners do not contain Xcode 27. The app uses the Swift Package Manager only; CocoaPods is not needed.
+
 ```yaml
   build-ios:
-    runs-on: macos-15
+    runs-on: xcode-27
     needs: [prepare]
     steps:
       - uses: actions/checkout@v3
@@ -99,6 +101,10 @@ Add the jobs to `.github/workflows/main.yml` of the [Android page](./android.md#
           security list-keychain -d user -s $KEYCHAIN_PATH
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+      - name: Show Xcode and iOS SDK version
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
       - name: Install project dependencies
         run: flutter pub get
       - name: Generate intermediates
