@@ -17,6 +17,10 @@ sidebar_position: 0
 - The reverse proxy serves the privacy policy at `/privacy` and the legal information at `/legal` as static pages from `CONF_TEMPLATE/staticfiles`. Before, the proxy forwarded these paths to Media, which answered with `401`, so the mobile app 3.0.9 showed an error instead of the privacy policy. A missing page answers with `404`.
 - The database and the message bus have healthchecks. Identity and Media start only when both accept connections. Before, they could start too early and restarted until the database and the message bus were ready.
 
+### Bug fixes
+
+- The message bus stores its data in the named volume `wekode.mml.mbus.data`. Before, the data was in an anonymous volume and was lost with `docker compose down` or when the container was removed. Events for groups and clients that Media had not received yet were lost, e.g. a blocked client kept its share links. Existing `.env` files keep working without changes.
+
 ## Identity and Media
 
 ### New features
@@ -49,7 +53,13 @@ sudo docker compose up -d wekode.mml.reverseproxy
 ```
 
 4. If you build a customized iOS app, change `runs-on: macos-15` of the `build-ios` job to `runs-on: xcode-27` and add the step that shows the Xcode and iOS SDK version. See [iOS workflow](../customize/ios.md#workflow). Remove an own `ios/Podfile`, if your fork still has one.
-5. Recommended: copy the new `docker-compose.yml` to use the healthchecks of the database and the message bus. Without them the services still recover, but restart until the database and the message bus are ready. Pull and recreate the services to update Identity and Media.
+5. Recommended: copy the new `docker-compose.yml` to use the healthchecks of the database and the message bus and to keep the data of the message bus. Without them the services still recover, but restart until the database and the message bus are ready. The data of the old anonymous volume is not moved to the new volume. The user from `rabbitmq.conf` is created again on start, users added by hand must be added again. Before you recreate the services, make sure that the queue `mml.media.queue` is empty.
+
+```bash
+sudo docker compose exec wekode.mml.mbus rabbitmqctl list_queues name messages
+```
+
+Pull and recreate the services to update Identity and Media.
 
 ```bash
 sudo docker compose pull
