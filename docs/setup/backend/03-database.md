@@ -102,6 +102,10 @@ sudo docker compose ps wekode.mml.db
 sudo docker compose logs wekode.mml.db | grep "ready to accept connections"
 ```
 
-The container is running and the log contains `database system is ready to accept connections`.
+The container is running and the log contains `database system is ready to accept connections`. After some seconds `ps` shows the container as `(healthy)`. Identity and Media wait for it on start.
+
+:::tip Update postgres
+Set a fixed version in `POSTRES_VERSION` instead of `latest`. A new major version of postgres cannot read the data of the old one. Follow [Update database](./operations.md#update-database) before you change the version.
+:::
 
 **Next:** [Step 4: Cache and message bus](./04-cache-and-message-bus.md)

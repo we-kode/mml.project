@@ -23,6 +23,16 @@ The external proxy has to send the headers `X-Forwarded-For` and `X-Forwarded-Pr
 With `PROXY_TLS=false` the reverse proxy trusts the `X-Forwarded-Proto` header. Allow only your external proxy to reach `SSL_PORT`, e.g. with a firewall rule.
 :::
 
+## Outages of the database or the message bus
+
+Identity and Media keep running, if PostgreSQL or RabbitMQ restart or are not available for a short time:
+
+- Requests to the database are retried up to 3 times with a delay of at most 5 seconds.
+- If the database or the message bus is still not available, the request answers with `503 Service Unavailable` and the header `Retry-After: 5`. The log contains one warning per failed request.
+- On start, the services wait up to 60 seconds for the database. Media also waits for the message bus. If it is still not available after that time, the service stops and Docker restarts it because of `restart: always`.
+- The healthchecks of `wekode.mml.db` and `wekode.mml.mbus` in `docker-compose.yml` let Identity and Media start only, when both accept connections. Check them with `sudo docker compose ps`.
+- RabbitMQ reconnects automatically. Identity stores events for groups and clients in the table `outbox_message` together with the change and sends them every 2 seconds in the order they were created. Events, which cannot be sent, stay in the table and are sent, when the message bus is available again. An event can be delivered twice, which Media handles. Events with an unknown type are marked with `attempts = -1`, logged as error and removed after 30 days.
+
 ## Move to another domain
 
 A running system can move to another domain, e.g. from a free DynDNS domain to an own domain behind an external proxy, without registering the devices again. During the move both domains work in parallel:
