@@ -15,6 +15,21 @@ sidebar_position: 0
 ### New features
 
 - The reverse proxy serves the privacy policy at `/privacy` and the legal information at `/legal` as static pages from `CONF_TEMPLATE/staticfiles`. Before, the proxy forwarded these paths to Media, which answered with `401`, so the mobile app 3.0.9 showed an error instead of the privacy policy. A missing page answers with `404`.
+- The database and the message bus have healthchecks. Identity and Media start only when both accept connections. Before, they could start too early and restarted until the database and the message bus were ready.
+
+## Identity and Media
+
+### New features
+
+- On start, the log shows `'TLS:Cert' configured. Listening on https.`, if a certificate is configured. Without a certificate it still shows that the service listens on http.
+
+### Bug fixes
+
+- A restart or short outage of PostgreSQL or RabbitMQ no longer crashes the services. Database requests are retried up to 3 times. If the outage lasts longer, the request answers with `503 Service Unavailable` and `Retry-After: 5` instead of `500`. See [Outages of the database or the message bus](../setup/backend/operations.md#outages-of-the-database-or-the-message-bus).
+- On start, both services wait up to 60 seconds for the database. Media also waits for the message bus to subscribe to the events.
+- Media no longer stops, if the migration of the bitrates or covers fails. The migration runs again on the next start.
+- Identity stores the events for groups and clients together with the change in the database and sends them afterwards. Events created while RabbitMQ is not available are sent, when it is available again. The migration adds the table `outbox_message` and runs automatically on start.
+- The Identity CLI no longer connects to RabbitMQ. Changes made with the CLI are sent by the identity service.
 
 ## Mobile app
 
@@ -34,3 +49,9 @@ sudo docker compose up -d wekode.mml.reverseproxy
 ```
 
 4. If you build a customized iOS app, change `runs-on: macos-15` of the `build-ios` job to `runs-on: xcode-27` and add the step that shows the Xcode and iOS SDK version. See [iOS workflow](../customize/ios.md#workflow). Remove an own `ios/Podfile`, if your fork still has one.
+5. Recommended: copy the new `docker-compose.yml` to use the healthchecks of the database and the message bus. Without them the services still recover, but restart until the database and the message bus are ready. Pull and recreate the services to update Identity and Media.
+
+```bash
+sudo docker compose pull
+sudo docker compose up -d
+```
