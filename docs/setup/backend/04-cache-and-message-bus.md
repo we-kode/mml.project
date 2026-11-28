@@ -82,6 +82,8 @@ sudo chown -R 1001:1001 mbus/
 sudo docker compose up wekode.mml.mbus -d
 ```
 
+RabbitMQ stores users, permissions, queues, and messages that are not delivered yet in the named docker volume `wekode.mml.mbus.data`. The volume is created on the first start and kept when the container is recreated or removed with `docker compose down`. Only `docker compose down -v` deletes it.
+
 ## Check
 
 ```bash
