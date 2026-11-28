@@ -31,6 +31,13 @@ sidebar_position: 0
 - Identity stores the events for groups and clients together with the change in the database and sends them afterwards. Events created while RabbitMQ is not available are sent, when it is available again. The migration adds the table `outbox_message` and runs automatically on start.
 - The Identity CLI no longer connects to RabbitMQ. Changes made with the CLI are sent by the identity service.
 
+## Mobile app
+
+### Changes
+
+- The iOS app is built with the Swift Package Manager only. The CocoaPods integration (`Podfile`, Pods references in the Xcode project) is removed, which shortens the build.
+- The [iOS workflow](../customize/ios.md#workflow) builds on the `xcode-27` runner with the iOS 27 SDK. From April 2027 App Store Connect accepts only apps built with this SDK or later (`ITMS-90725`).
+
 ## Upgrade from 4.0.2
 
 1. If you serve a privacy policy or legal information, copy the new [`default.conf.template`](https://github.com/we-kode/mml.deployment/blob/develop/reverse-proxy/default.conf.template) and `docker-compose.yml`. Remove own `location` blocks for these paths from the old template.
@@ -41,7 +48,8 @@ sidebar_position: 0
 sudo docker compose up -d wekode.mml.reverseproxy
 ```
 
-4. Recommended: copy the new `docker-compose.yml` to use the healthchecks of the database and the message bus. Without them the services still recover, but restart until the database and the message bus are ready. Pull and recreate the services to update Identity and Media.
+4. If you build a customized iOS app, change `runs-on: macos-15` of the `build-ios` job to `runs-on: xcode-27` and add the step that shows the Xcode and iOS SDK version. See [iOS workflow](../customize/ios.md#workflow). Remove an own `ios/Podfile`, if your fork still has one.
+5. Recommended: copy the new `docker-compose.yml` to use the healthchecks of the database and the message bus. Without them the services still recover, but restart until the database and the message bus are ready. Pull and recreate the services to update Identity and Media.
 
 ```bash
 sudo docker compose pull
